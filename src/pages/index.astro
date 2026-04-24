@@ -39,8 +39,8 @@ import '../styles/global.css';
       <!-- Floating Telemetry HUD -->
       <div class="metrics-hud hidden" id="metrics-hud">
         <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
-          <span style="font-family:'Press Start 2P'; font-size:8px; color:var(--accent-cyan); letter-spacing:1px;">PERFORMANCE METRICS</span>
-          <span id="score-val" style="font-family:'Press Start 2P'; font-size:24px; color:var(--accent-cyan);">--</span>
+          <span style="font-family:'Press Start 2P'; font-size:10px; color:var(--accent-cyan); letter-spacing:1px;">PERFORMANCE METRICS</span>
+          <span id="score-val" style="font-family:'Press Start 2P'; font-size:32px; color:var(--accent-cyan);">--</span>
         </div>
         
         <div class="hud-row">
@@ -67,9 +67,9 @@ import '../styles/global.css';
       </button>
       
       <div class="floating-simulator hidden" id="floating-simulator">
-        <div style="font-family:'Press Start 2P'; font-size:8px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; min-width:120px;">
+        <div style="font-family:'Press Start 2P'; font-size:10px; color:var(--text-muted); display:flex; flex-direction:column; gap:6px; min-width:140px;">
           <span>SIMULATOR</span>
-          <span id="slider-val" style="font-size:12px; color:var(--accent-cyan);">100</span>
+          <span id="slider-val" style="font-size:16px; color:var(--accent-cyan);">100</span>
         </div>
         <input type="range" min="0" max="100" value="100" class="hud-slider" id="score-slider" style="flex:1;" />
       </div>

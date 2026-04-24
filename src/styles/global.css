@@ -168,15 +168,32 @@ canvas {
 .btn-audit:hover { transform: translateY(-2px); box-shadow: 0 6px 0 rgba(0,0,0,0.2); }
 
 /* --- Floating Telemetry HUD (Top-Right) --- */
+.floating-simulator {
+  position: absolute;
+  bottom: 120px;
+  left: 80px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(8px);
+  padding: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 500;
+  min-width: 320px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
 .metrics-hud {
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 260px;
+  width: 280px;
   background: var(--bg-panel);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 20px;
+  padding: 24px;
   border-radius: 4px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   z-index: 100;
@@ -210,9 +227,9 @@ canvas {
   display: flex;
   justify-content: space-between;
   font-family: 'Press Start 2P';
-  font-size: 8px;
+  font-size: 10px;
   color: var(--text-muted);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   transition: color 0.3s ease;
 }
 
