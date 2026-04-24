@@ -1,13 +1,14 @@
-// ============================================================
-// Lighthouse API Endpoint — WINDOWS COMPATIBILITY FIX
-// ============================================================
-
 import type { APIRoute } from "astro";
 import lighthouse from "lighthouse";
 import * as chromeLauncher from "chrome-launcher";
 import path from "node:path";
 import fs from "node:fs";
 
+/**
+ * Handles the Lighthouse performance audit request.
+ * @param request - The incoming Astro request.
+ * @returns A JSON response with performance metrics or an error.
+ */
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const targetUrl = url.searchParams.get("url");
@@ -19,7 +20,6 @@ export const GET: APIRoute = async ({ request }) => {
     });
   }
 
-  // Windows EPERM Fix: Use a local directory for Chrome profile instead of %TEMP%
   const userDataDir = path.join(process.cwd(), ".lighthouse-profile");
   if (!fs.existsSync(userDataDir)) {
     fs.mkdirSync(userDataDir, { recursive: true });
@@ -29,15 +29,13 @@ export const GET: APIRoute = async ({ request }) => {
 
   let chrome: any;
   try {
-    // 1. Launch Chrome with custom userDataDir
     console.log("[Lighthouse API] Launching Chrome...");
     chrome = await chromeLauncher.launch({
       chromeFlags: ["--headless", "--no-sandbox", "--disable-gpu"],
-      userDataDir: userDataDir, // This bypasses the permission issues in AppData/Local/Temp
+      userDataDir: userDataDir,
     });
     console.log(`[Lighthouse API] Chrome launched on port: ${chrome.port}`);
 
-    // 2. Run Lighthouse
     const options = {
       port: chrome.port,
       output: "json" as const,
@@ -55,7 +53,6 @@ export const GET: APIRoute = async ({ request }) => {
     const perf = lhr.categories.performance;
     const audits = lhr.audits;
 
-    // 3. Extract Metrics
     const metrics = {
       performanceScore: Math.round((perf?.score ?? 0) * 100),
       fcp: audits["first-contentful-paint"]?.numericValue ?? 0,
@@ -94,5 +91,3 @@ export const GET: APIRoute = async ({ request }) => {
     }
   }
 };
-
-

@@ -1,9 +1,12 @@
-// ============================================================
-// UI & Effects Rendering Sprites
-// ============================================================
-
 import { TILE_SIZE, HIGHLIGHT_COLORS } from "./render-constants";
 
+/**
+ * Draws the historical performance trend graph.
+ * @param ctx - The canvas rendering context.
+ * @param x - The X position.
+ * @param y - The Y position.
+ * @param history - Array of historical performance scores.
+ */
 export function drawTrendGraph(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -33,6 +36,13 @@ export function drawTrendGraph(
   ctx.fillText("METRICS", x + 5, y - 5);
 }
 
+/**
+ * Draws smoke particles for damaged servers.
+ * @param ctx - The canvas rendering context.
+ * @param x - The X center.
+ * @param y - The Y center.
+ * @param tick - The animation tick.
+ */
 export function drawSmoke(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -46,6 +56,13 @@ export function drawSmoke(
   ctx.fill();
 }
 
+/**
+ * Draws animated fire effects.
+ * @param ctx - The canvas rendering context.
+ * @param x - The X center.
+ * @param y - The Y center.
+ * @param tick - The animation tick.
+ */
 export function drawFire(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -69,6 +86,14 @@ export function drawFire(
   ctx.restore();
 }
 
+/**
+ * Highlights a specific grid tile related to a performance metric.
+ * @param ctx - The canvas rendering context.
+ * @param metric - The metric key (LCP, FCP, etc).
+ * @param x - Grid X.
+ * @param y - Grid Y.
+ * @param tick - Animation tick.
+ */
 export function drawMetricHighlight(
   ctx: CanvasRenderingContext2D,
   metric: string,
@@ -94,6 +119,14 @@ export function drawMetricHighlight(
   ctx.restore();
 }
 
+/**
+ * Visualizes the Largest Contentful Paint (LCP) as a heavy weight.
+ * @param ctx - The canvas rendering context.
+ * @param x - Grid X.
+ * @param y - Grid Y.
+ * @param score - The performance score.
+ * @param tick - Animation tick.
+ */
 export function drawLCPWeight(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -106,24 +139,27 @@ export function drawLCPWeight(
   const severity = (100 - score) / 100;
   const shake = Math.sin(tick * 0.5) * (severity * 5);
 
-  // Draw huge "Heavy Data" crate
   ctx.fillStyle = "#24283b";
   ctx.fillRect(px + shake, py - 10, TILE_SIZE * 1.5, TILE_SIZE + 10);
   ctx.strokeStyle = "#7aa2f7";
   ctx.lineWidth = 2;
   ctx.strokeRect(px + shake, py - 10, TILE_SIZE * 1.5, TILE_SIZE + 10);
 
-  // Straps
   ctx.fillStyle = "#e0af68";
   ctx.fillRect(px + shake + 10, py - 10, 5, TILE_SIZE + 10);
   ctx.fillRect(px + shake + TILE_SIZE, py - 10, 5, TILE_SIZE + 10);
 
-  // Icon
   ctx.fillStyle = "#fff";
   ctx.font = "bold 12px sans-serif";
   ctx.fillText("LCP", px + shake + 15, py + 15);
 }
 
+/**
+ * Applies a visual jitter effect to the entire context based on CLS score.
+ * @param ctx - The canvas rendering context.
+ * @param score - The CLS stability score.
+ * @param tick - Animation tick.
+ */
 export function applyCLSJitter(
   ctx: CanvasRenderingContext2D,
   score: number,

@@ -1,7 +1,3 @@
-// ============================================================
-// Simulation Controller — Easter Eggs & Demo Modes
-// ============================================================
-
 import {
   type SystemSnapshot,
   type Agent,
@@ -28,6 +24,9 @@ import {
   $history,
 } from "../store/systemStore";
 
+/**
+ * Controller for the entire simulation lifecycle.
+ */
 export class SimulationController {
   private renderer!: CanvasRenderer;
   private agents: Agent[];
@@ -48,6 +47,10 @@ export class SimulationController {
     this.agents = createAgents();
   }
 
+  /**
+   * Initializes the simulation with a target canvas.
+   * @param canvas - The target HTML canvas.
+   */
   init(canvas: HTMLCanvasElement) {
     this.renderer = new CanvasRenderer(canvas);
     this.running = true;
@@ -55,6 +58,10 @@ export class SimulationController {
     this.animFrameId = requestAnimationFrame(this.loop);
   }
 
+  /**
+   * Forces a specific performance score for simulation purposes.
+   * @param score - Performance score (0-100).
+   */
   forceScore(score: number) {
     if (!this.audioStarted) {
       audio.startAmbience();
@@ -77,6 +84,10 @@ export class SimulationController {
     if (this.tickCount % 20 === 0) audio.playBeep(440 + score * 5, 0.05);
   }
 
+  /**
+   * Toggles night mode effect.
+   * @param on - Boolean to enable/disable.
+   */
   toggleNightMode(on: boolean) {
     this.renderer.setNightMode(on);
     $isNightMode.set(on);
@@ -143,10 +154,14 @@ export class SimulationController {
     return getHistory().map((h) => h.snapshot.metrics.performanceScore);
   }
 
+  /**
+   * Triggers a live Lighthouse audit scan.
+   * @param url - The target URL to audit.
+   * @returns A promise resolving to the final system snapshot.
+   */
   async runScan(url: string): Promise<SystemSnapshot> {
     if (this.scanning) throw new Error("Scan already in progress");
     
-    // Clear state for neutral scan phase
     this.snapshot = null;
     this.forcedScore = null;
     $systemSnapshot.set(null);
@@ -159,7 +174,6 @@ export class SimulationController {
     $isScanning.set(true);
     this.scanStartTime = performance.now();
     
-    // Clear all existing dialogues
     this.agents.forEach(a => {
       a.dialogue = undefined;
       a.dialogueTimer = 0;
@@ -179,11 +193,10 @@ export class SimulationController {
       $isScanning.set(false);
       
       if (error.message === "INVALID_URL") {
-        // Trigger Critical Error state
         this.forceScore(0);
         this.agents.forEach(a => {
           a.dialogue = "INVALID URL TARGET!";
-          a.dialogueTimer = 4; // Auto-clear after 4s
+          a.dialogueTimer = 4;
         });
       } else {
         this.forceScore(Math.random() * 20 + 10);
@@ -192,9 +205,16 @@ export class SimulationController {
     }
   }
 
+  /**
+   * Returns the current system snapshot.
+   */
   getSnapshot() {
     return this.snapshot;
   }
+
+  /**
+   * Cleans up resources and stops the simulation.
+   */
   destroy() {
     this.running = false;
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);

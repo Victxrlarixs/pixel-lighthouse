@@ -1,7 +1,3 @@
-// ============================================================
-// Agent Manager — PERFORMANCE & INFRA ROLES
-// ============================================================
-
 import {
   type Agent,
   type SystemSnapshot,
@@ -77,7 +73,9 @@ const FIELD_BEHAVIORS: Record<string, string[]> = {
     "EVACUATE RACK 2!",
     "FIRE EXTINGUISHER READY!",
   ],
-};export const LOCATIONS = {
+};
+
+export const LOCATIONS = {
   DESKS: [
     { x: 1, y: 9 }, { x: 2, y: 9 }, { x: 3, y: 9 },
     { x: 5, y: 9 }, { x: 6, y: 9 }, { x: 7, y: 9 },
@@ -99,18 +97,27 @@ const FIELD_BEHAVIORS: Record<string, string[]> = {
   SOFAS: [{ x: 5, y: 10 }, { x: 6, y: 10 }, { x: 13, y: 11 }],
 };
 
+/**
+ * Checks if a tile coordinate is walkable.
+ * @param x - Grid X coordinate.
+ * @param y - Grid Y coordinate.
+ * @returns True if the agent can walk on the tile.
+ */
 export function isWalkable(x: number, y: number): boolean {
   const tx = Math.floor(x);
   const ty = Math.floor(y);
   if (tx < 0 || tx >= MAP_COLS || ty < 0 || ty >= MAP_ROWS) return false;
   const tile = DATA_CENTER_MAP[ty][tx];
-  // Strictly FLOOR or CARPET only
   return [
     TileType.FLOOR,
     TileType.CARPET,
   ].includes(tile);
 }
 
+/**
+ * Initializes the list of simulation agents.
+ * @returns Array of initialized agents.
+ */
 export function createAgents(): Agent[] {
   return [
     makeAgent("lead", AgentRole.PERFORMANCE_LEAD, LOCATIONS.DESKS[0].x, LOCATIONS.DESKS[0].y, { skin: "#ffcc99", hair: "#1a1b26", body: "normal", isWoman: true }),
@@ -153,26 +160,30 @@ const CHAOS_DIALOGUES = [
 
 let lastDialogueTime = 0;
 
+/**
+ * Updates agent behaviors and targets based on system state.
+ * @param agents - Current list of agents.
+ * @param snapshot - Current system snapshot.
+ * @param isScanning - Whether a performance audit is running.
+ * @param scanElapsed - Time elapsed since scan start.
+ */
 export function updateAgents(agents: Agent[], snapshot: SystemSnapshot | null, isScanning: boolean, scanElapsed: number): void {
   const now = Date.now();
   const isChaos = snapshot?.state === SystemState.CHAOS || snapshot?.state === SystemState.FIRE;
 
   for (const agent of agents) {
-    const meta = (agent as any).metadata;
+    const meta = agent.metadata;
     let phaseKey = snapshot?.state || "INITIAL";
     if (isScanning) phaseKey = "SCAN_PHASE";
     
-    // --- Behavioral Choreography ---
     if (isScanning) {
-      // 1. DURING AUDIT: All to desks + Lighthouse Dialogues
       if (agent.targetX !== agent.homeX || agent.targetY !== agent.homeY) {
         agent.targetX = agent.homeX;
         agent.targetY = agent.homeY;
-        meta.taskTimer = 60; // Locked at desk
+        meta.taskTimer = 60;
       }
       meta.mood = "working";
       
-      // Sequential technical dialogues based on progress
       const stepIndex = Math.min(
         Math.floor(scanElapsed / 1.5), 
         LIGHTHOUSE_STEPS.length - 1
@@ -186,16 +197,14 @@ export function updateAgents(agents: Agent[], snapshot: SystemSnapshot | null, i
       meta.wasScanning = true;
     } else {
       if (meta.wasScanning) {
-        // 2. JUST FINISHED: All to servers/racks
         const pool = Math.random() > 0.5 ? LOCATIONS.RACKS : LOCATIONS.SERVERS;
         const target = pool[Math.floor(Math.random() * pool.length)];
         agent.targetX = target.x;
         agent.targetY = target.y;
-        meta.taskTimer = 5 + Math.random() * 5; // Check for a bit
+        meta.taskTimer = 5 + Math.random() * 5;
         meta.wasScanning = false;
         meta.mood = "happy";
       } else {
-        // General Moods based on system health
         if (snapshot?.state === SystemState.FIRE) meta.mood = "fire";
         else if (snapshot?.state === SystemState.CHAOS) meta.mood = "chaos";
         else if (snapshot?.metrics && snapshot.metrics.performanceScore > 90) meta.mood = "happy";
@@ -203,7 +212,6 @@ export function updateAgents(agents: Agent[], snapshot: SystemSnapshot | null, i
       }
     }
 
-    // Logic for triggering dialogues
     const dialogueChance = isChaos ? 0.05 : (isScanning ? 0.03 : 0.01);
     if (!agent.dialogue && now - lastDialogueTime > 1500 && Math.random() < dialogueChance) {
       if (isChaos) {
@@ -219,8 +227,13 @@ export function updateAgents(agents: Agent[], snapshot: SystemSnapshot | null, i
   }
 }
 
+/**
+ * Handles frame-by-frame movement and state updates for agents.
+ * @param agents - List of agents.
+ * @param dt - Delta time.
+ * @param isChaos - Whether the system is in chaos.
+ */
 export function tickAgents(agents: Agent[], dt: number, isChaos: boolean = false): void {
-  // 1. Map of occupied tiles (where agents are OR where they are going)
   const reservedTiles = new Set<string>();
   for (const a of agents) {
     reservedTiles.add(`${Math.floor(a.x)},${Math.floor(a.y)}`);
@@ -230,7 +243,7 @@ export function tickAgents(agents: Agent[], dt: number, isChaos: boolean = false
   }
 
   for (const agent of agents) {
-    const meta = (agent as any).metadata;
+    const meta = agent.metadata;
     if (agent.dialogueTimer > 0) {
       agent.dialogueTimer -= dt;
       if (agent.dialogueTimer <= 0) agent.dialogue = undefined;
@@ -248,7 +261,6 @@ export function tickAgents(agents: Agent[], dt: number, isChaos: boolean = false
       let nextX = agent.x;
       let nextY = agent.y;
 
-      // Habbo Logic: Only move if the NEXT tile is NOT reserved by someone else
       if (Math.abs(dx) > 0.01) {
         const testX = agent.x + Math.sign(dx) * Math.min(step, Math.abs(dx));
         const tx = Math.floor(testX);
@@ -297,12 +309,11 @@ export function tickAgents(agents: Agent[], dt: number, isChaos: boolean = false
           const t = pool[Math.floor(Math.random() * pool.length)];
           
           const targetKey = `${t.x},${t.y}`;
-          // CRITICAL: Only pick target if NO ONE ELSE is there or going there
           if (!reservedTiles.has(targetKey)) {
             agent.targetX = t.x;
             agent.targetY = t.y;
             meta.taskTimer = isChaos ? 0.01 : (0.1 + Math.random() * 0.3);
-            reservedTiles.add(targetKey); // Reserve it immediately
+            reservedTiles.add(targetKey);
           }
         }
       }

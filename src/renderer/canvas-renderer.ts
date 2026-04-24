@@ -1,7 +1,3 @@
-// ============================================================
-// Canvas Renderer — PREMIUM GBA
-// ============================================================
-
 import {
   type SystemSnapshot,
   type Agent,
@@ -31,6 +27,9 @@ import {
 import { TILE_SIZE } from "./render-constants";
 import { $hoveredMetric, $selectedMetric } from "../store/systemStore";
 
+/**
+ * Main rendering engine for the Pixel Insights simulation.
+ */
 export class CanvasRenderer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -39,6 +38,10 @@ export class CanvasRenderer {
   public isNightMode = false;
   public isFeverMode = false;
 
+  /**
+   * Initializes the renderer with a canvas element.
+   * @param canvas - The HTML canvas element to render onto.
+   */
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d", { alpha: false })!;
@@ -47,19 +50,34 @@ export class CanvasRenderer {
     this.ctx.imageSmoothingEnabled = false;
   }
 
+  /**
+   * Toggles night mode rendering.
+   * @param on - Whether night mode is enabled.
+   */
   setNightMode(on: boolean) {
     this.isNightMode = on;
   }
+
+  /**
+   * Toggles fever mode (high performance state) rendering.
+   * @param on - Whether fever mode is enabled.
+   */
   setFeverMode(on: boolean) {
     this.isFeverMode = on;
   }
 
+  /**
+   * Main render loop for active simulation.
+   * @param snapshot - Current system snapshot data.
+   * @param agents - List of active agents.
+   * @param history - Performance score history.
+   */
   render(snapshot: SystemSnapshot, agents: Agent[], history: number[]) {
     this.tick++;
     const { ctx } = this;
     const { state } = snapshot;
-    const lcpScore = snapshot.metrics.performanceScore; // Simplified for demo
-    const clsScore = 100; // Mock CLS for now
+    const lcpScore = snapshot.metrics.performanceScore;
+    const clsScore = 100;
     const selected = $selectedMetric.get();
     const hovered = $hoveredMetric.get();
 
@@ -68,40 +86,34 @@ export class CanvasRenderer {
       ctx.translate(Math.random() * 4 - 2, Math.random() * 4 - 2);
     ctx.scale(this.scale, this.scale);
 
-    // --- CLS Jitter Effect ---
     ctx.save();
     if (selected === "CLS" || hovered === "CLS")
-      applyCLSJitter(ctx, 40, this.tick); // Force jitter for feedback
+      applyCLSJitter(ctx, 40, this.tick);
     else if (clsScore < 90) applyCLSJitter(ctx, clsScore, this.tick);
 
     for (let row = 0; row < MAP_ROWS; row++) {
-      // 1. Floor & Base for this row
       for (let col = 0; col < MAP_COLS; col++) {
         drawFloor(ctx, DATA_CENTER_MAP[row][col], col, row, state);
         drawTileBase(ctx, DATA_CENTER_MAP[row][col], col, row, state, agents, this.tick, this.isNightMode);
       }
 
-      // --- Special LCP Layer (Row 4) ---
       if (row === 4 && (lcpScore < 85 || selected === "LCP" || hovered === "LCP")) {
         drawLCPWeight(ctx, 5, 4, lcpScore, this.tick);
       }
 
-      // 2. Agents in this row
       const agentsInRow = agents.filter(a => Math.floor(a.y) === row);
       for (const agent of agentsInRow) {
         agent.metadata = { ...agent.metadata, tbtScore: snapshot.metrics.performanceScore };
         drawAgentBody(ctx, agent, state, this.tick);
       }
 
-      // 3. Top layer & Lights for this row
       for (let col = 0; col < MAP_COLS; col++) {
         drawTileTop(ctx, DATA_CENTER_MAP[row][col], col, row, state, this.tick, this.isNightMode);
         drawTileLights(ctx, DATA_CENTER_MAP[row][col], col, row, state, this.tick, this.isNightMode);
       }
     }
-    ctx.restore(); // End CLS Jitter
+    ctx.restore();
 
-    // --- Interaction Highlights ---
     if (hovered === "LCP" || selected === "LCP")
       drawMetricHighlight(ctx, "LCP", 5, 4, this.tick);
     if (hovered === "FCP" || selected === "FCP")
@@ -145,6 +157,13 @@ export class CanvasRenderer {
     this.drawScanlines();
   }
 
+  /**
+   * Render loop for idle/waiting state.
+   * @param agents - List of active agents.
+   * @param tick - Animation tick.
+   * @param isScanning - Whether a scan is currently running.
+   * @param history - Performance score history.
+   */
   renderIdle(
     agents: Agent[],
     tick: number,
@@ -227,7 +246,6 @@ export class CanvasRenderer {
 
     ctx.restore();
     
-    // Hide history/telemetry during active scanning
     if (!isScanning && history.length > 0) {
       drawTrendGraph(ctx, 10, MAP_ROWS * TILE_SIZE - 75, history);
     }

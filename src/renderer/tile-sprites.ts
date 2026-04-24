@@ -1,10 +1,14 @@
-// ============================================================
-// Tile Rendering Sprites
-// ============================================================
-
 import { TileType, SystemState, type Agent } from "../core/types";
 import { TILE_SIZE, STATE_COLORS } from "./render-constants";
 
+/**
+ * Draws the floor tiles of the data center.
+ * @param ctx - The canvas rendering context.
+ * @param tile - The type of tile to draw.
+ * @param x - The grid X coordinate.
+ * @param y - The grid Y coordinate.
+ * @param state - The current system state.
+ */
 export function drawFloor(
   ctx: CanvasRenderingContext2D,
   tile: TileType,
@@ -28,6 +32,17 @@ export function drawFloor(
   }
 }
 
+/**
+ * Draws the base layer of a specialized tile (furniture, servers, etc).
+ * @param ctx - The canvas rendering context.
+ * @param tile - The type of tile to draw.
+ * @param x - The grid X coordinate.
+ * @param y - The grid Y coordinate.
+ * @param state - The current system state.
+ * @param agents - The list of active agents.
+ * @param tick - The animation tick.
+ * @param isNight - Whether night mode is active.
+ */
 export function drawTileBase(
   ctx: CanvasRenderingContext2D,
   tile: TileType,
@@ -75,6 +90,16 @@ export function drawTileBase(
   }
 }
 
+/**
+ * Draws the top layer of a specialized tile.
+ * @param ctx - The canvas rendering context.
+ * @param tile - The type of tile to draw.
+ * @param x - The grid X coordinate.
+ * @param y - The grid Y coordinate.
+ * @param state - The current system state.
+ * @param tick - The animation tick.
+ * @param isNight - Whether night mode is active.
+ */
 export function drawTileTop(
   ctx: CanvasRenderingContext2D,
   tile: TileType,
@@ -128,17 +153,27 @@ export function drawTileTop(
       ctx.strokeRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2);
       break;
     case TileType.SOFA:
-      ctx.fillStyle = "#455a64"; // Sofa base
+      ctx.fillStyle = "#455a64";
       ctx.fillRect(px + 2, py + 10, TILE_SIZE - 4, TILE_SIZE - 14);
-      ctx.fillStyle = "#607d8b"; // Backrest
+      ctx.fillStyle = "#607d8b";
       ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, 12);
-      ctx.fillStyle = "#37474f"; // Arms
+      ctx.fillStyle = "#37474f";
       ctx.fillRect(px + 2, py + 14, 6, 20);
       ctx.fillRect(px + TILE_SIZE - 8, py + 14, 6, 20);
       break;
   }
 }
 
+/**
+ * Draws animated lights and screen effects for relevant tiles.
+ * @param ctx - The canvas rendering context.
+ * @param tile - The type of tile to draw.
+ * @param x - The grid X coordinate.
+ * @param y - The grid Y coordinate.
+ * @param state - The current system state.
+ * @param tick - The animation tick.
+ * @param isNight - Whether night mode is active.
+ */
 export function drawTileLights(
   ctx: CanvasRenderingContext2D,
   tile: TileType,

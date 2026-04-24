@@ -1,121 +1,81 @@
-// ============================================================
-// Sound Effects — Web Audio API procedural sounds
-// ============================================================
-
-import { SystemState } from "../core/types";
-
-class SoundEngine {
+/**
+ * Low-level Web Audio API wrapper for simulation sound effects and ambience.
+ */
+export class SoundEngine {
   private ctx: AudioContext | null = null;
-  private enabled = false;
-  private currentState: SystemState = SystemState.STABLE;
-  private ambientOsc: OscillatorNode | null = null;
-  private ambientGain: GainNode | null = null;
+  private ambienceOsc: OscillatorNode | null = null;
+  private ambienceGain: GainNode | null = null;
 
-  init() {
-    this.ctx = new AudioContext();
-    this.enabled = true;
-  }
-
-  toggle() {
-    if (!this.ctx) this.init();
-    this.enabled = !this.enabled;
-    if (!this.enabled && this.ambientOsc) {
-      this.ambientOsc.stop();
-      this.ambientOsc = null;
+  /**
+   * Initializes the audio context if not already active.
+   */
+  private init() {
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-    return this.enabled;
   }
 
-  isEnabled() {
-    return this.enabled;
-  }
-
-  updateState(state: SystemState) {
-    if (!this.enabled || !this.ctx) return;
-    if (state === this.currentState) return;
-
-    const prev = this.currentState;
-    this.currentState = state;
-
-    // Transition sound
-    if (state === SystemState.FIRE && prev !== SystemState.FIRE) {
-      this.playAlarm();
-    } else if (state === SystemState.CHAOS && prev === SystemState.STABLE) {
-      this.playWarning();
-    } else if (state === SystemState.STABLE && prev !== SystemState.STABLE) {
-      this.playResolve();
-    }
-
-    this.updateAmbient();
-  }
-
-  private playAlarm() {
+  /**
+   * Starts a low-frequency hum to simulate data center ambience.
+   */
+  startAmbience() {
+    this.init();
     if (!this.ctx) return;
+
+    this.ambienceGain = this.ctx.createGain();
+    this.ambienceGain.gain.value = 0;
+    this.ambienceGain.connect(this.ctx.destination);
+
+    this.ambienceOsc = this.ctx.createOscillator();
+    this.ambienceOsc.type = "sine";
+    this.ambienceOsc.frequency.value = 60;
+    this.ambienceOsc.connect(this.ambienceGain);
+    this.ambienceOsc.start();
+  }
+
+  /**
+   * Adjusts the volume of the ambience hum.
+   * @param intensity - Gain value (0.0 to 1.0).
+   */
+  setAmbienceIntensity(intensity: number) {
+    if (this.ambienceGain) {
+      this.ambienceGain.gain.setTargetAtTime(
+        intensity * 0.1,
+        this.ctx!.currentTime,
+        0.5,
+      );
+    }
+  }
+
+  /**
+   * Plays a simple beep tone.
+   * @param freq - Frequency in Hz.
+   * @param duration - Duration in seconds.
+   */
+  playBeep(freq: number, duration: number) {
+    this.init();
+    if (!this.ctx) return;
+
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    osc.connect(gain).connect(this.ctx.destination);
+
     osc.type = "square";
-    osc.frequency.setValueAtTime(880, this.ctx.currentTime);
-    osc.frequency.setValueAtTime(440, this.ctx.currentTime + 0.15);
-    osc.frequency.setValueAtTime(880, this.ctx.currentTime + 0.3);
-    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.5);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.5);
-  }
-
-  private playWarning() {
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.connect(gain).connect(this.ctx.destination);
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(660, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(330, this.ctx.currentTime + 0.3);
-    gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.4);
-  }
-
-  private playResolve() {
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.connect(gain).connect(this.ctx.destination);
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(440, this.ctx.currentTime);
-    osc.frequency.setValueAtTime(554, this.ctx.currentTime + 0.15);
-    osc.frequency.setValueAtTime(660, this.ctx.currentTime + 0.3);
+    osc.frequency.value = freq;
     gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.5);
+    osc.stop(this.ctx.currentTime + duration);
   }
 
-  private updateAmbient() {
-    if (!this.ctx) return;
-    if (this.ambientOsc) {
-      this.ambientOsc.stop();
-      this.ambientOsc = null;
-    }
-    if (this.currentState === SystemState.STABLE) return;
-
-    this.ambientOsc = this.ctx.createOscillator();
-    this.ambientGain = this.ctx.createGain();
-    this.ambientOsc.connect(this.ambientGain).connect(this.ctx.destination);
-    this.ambientOsc.type = "sawtooth";
-    this.ambientOsc.frequency.value =
-      this.currentState === SystemState.FIRE ? 55 : 40;
-    this.ambientGain.gain.value =
-      this.currentState === SystemState.FIRE ? 0.015 : 0.008;
-    this.ambientOsc.start();
-  }
-
-  destroy() {
-    if (this.ambientOsc) this.ambientOsc.stop();
-    if (this.ctx) this.ctx.close();
+  /**
+   * Plays a rhythmic alarm sound for critical states.
+   */
+  playAlarm() {
+    this.playBeep(880, 0.1);
+    setTimeout(() => this.playBeep(440, 0.1), 150);
   }
 }
-
-export const soundEngine = new SoundEngine();

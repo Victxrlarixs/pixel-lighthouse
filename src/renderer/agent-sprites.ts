@@ -1,10 +1,13 @@
-// ============================================================
-// Agent Rendering Sprites
-// ============================================================
-
 import { SystemState, type Agent } from "../core/types";
 import { TILE_SIZE, ROLE_SHIRT_COLORS } from "./render-constants";
 
+/**
+ * Draws the special easter egg cat.
+ * @param ctx - The canvas rendering context.
+ * @param x - The X coordinate.
+ * @param y - The Y coordinate.
+ * @param tick - The animation tick.
+ */
 export function drawCat(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -17,16 +20,23 @@ export function drawCat(
   ctx.save();
   ctx.translate(px + 24, py + 36 - bounce);
   ctx.fillStyle = "#2d2d2d";
-  ctx.fillRect(-10, 0, 20, 10); // body
-  ctx.fillRect(-12, -8, 8, 8); // head
+  ctx.fillRect(-10, 0, 20, 10);
+  ctx.fillRect(-12, -8, 8, 8);
   ctx.fillRect(-12, -10, 2, 2);
-  ctx.fillRect(-6, -10, 2, 2); // ears
+  ctx.fillRect(-6, -10, 2, 2);
   ctx.fillStyle = "#9ece6a";
   ctx.fillRect(-10, -6, 2, 2);
-  ctx.fillRect(-6, -6, 2, 2); // eyes
+  ctx.fillRect(-6, -6, 2, 2);
   ctx.restore();
 }
 
+/**
+ * Draws the body and animations of a human agent.
+ * @param ctx - The canvas rendering context.
+ * @param agent - The agent to draw.
+ * @param state - The current system state.
+ * @param _tick - The animation tick.
+ */
 export function drawAgentBody(
   ctx: CanvasRenderingContext2D,
   agent: Agent,
@@ -37,14 +47,13 @@ export function drawAgentBody(
     drawCat(ctx, agent.x, agent.y, performance.now() * 0.06);
     return;
   }
-  const t = performance.now() * 0.06; // Standard animation time
+  const t = performance.now() * 0.06;
   const px = agent.x * TILE_SIZE;
   const py = agent.y * TILE_SIZE;
   const isWalking =
     !agent.isSitting &&
     (agent.x !== agent.targetX || agent.y !== agent.targetY);
 
-  // Dynamic bounce/breath
   const bounce = isWalking
     ? Math.abs(Math.sin(t * 0.2)) * 4
     : Math.sin(t * 0.1) * 2;
@@ -54,16 +63,14 @@ export function drawAgentBody(
   const bodyX = px + (TILE_SIZE - bodyWidth) / 2;
 
   let ay = py - bounce;
-  if (agent.isSitting) ay += 12; // Lower the body more into the chair
+  if (agent.isSitting) ay += 12;
 
-  // Shadow (Smaller if sitting)
   ctx.fillStyle = "rgba(0,0,0,0.1)";
   ctx.beginPath();
   const shadowR = agent.isSitting ? 8 : 12;
   ctx.ellipse(px + 24, py + 44, shadowR, 6, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Legs (Hide if sitting)
   if (!agent.isSitting) {
     ctx.fillStyle = "#263238";
     const legOffset = isWalking ? Math.sin(walkPhase) * 6 : 0;
@@ -71,12 +78,10 @@ export function drawAgentBody(
     ctx.fillRect(bodyX + bodyWidth - 10, ay + 36, 8, 10 - legOffset);
   }
 
-  // Shirt
   ctx.fillStyle = ROLE_SHIRT_COLORS[agent.role] || "#fff";
   const shirtH = agent.isSitting ? 10 : 14;
   ctx.fillRect(bodyX, ay + 24, bodyWidth, shirtH);
 
-  // Arms
   const armSwing = isWalking ? Math.sin(walkPhase) * 8 : Math.sin(t * 0.1) * 2;
   ctx.fillStyle = agent.skinColor;
   if (agent.isSitting) {
@@ -87,12 +92,9 @@ export function drawAgentBody(
     ctx.fillRect(bodyX + bodyWidth - 2, ay + 24 - armSwing, 8, 8);
   }
 
-  // Head
   ctx.fillStyle = agent.skinColor;
   ctx.fillRect(px + 14, ay + 6, 20, 18);
 
-  // Apply TBT Stutter (Metaphor: main thread blocked)
-  // If TBT is high, we simulate lag by snapping the position
   const tbtScore = agent.metadata?.tbtScore || 100;
   if (tbtScore < 80 && !agent.isSitting) {
     const lagFactor = Math.floor((100 - tbtScore) / 10);
@@ -102,7 +104,6 @@ export function drawAgentBody(
     }
   }
 
-  // Hair
   ctx.fillStyle = agent.hairColor;
   if (agent.isWoman) {
     ctx.fillRect(px + 10, ay + 4, 28, 8);
@@ -112,7 +113,6 @@ export function drawAgentBody(
     ctx.fillRect(px + 12, ay + 4, 24, 8);
   }
 
-  // Eyes
   if (agent.direction !== "up") {
     ctx.fillStyle = "#263238";
     const ey = ay + 14;
@@ -126,7 +126,6 @@ export function drawAgentBody(
     }
   }
 
-  // --- Accessories ---
   ctx.save();
   const rx = px + 14;
   const ry = ay + 6;
@@ -155,6 +154,12 @@ export function drawAgentBody(
   ctx.restore();
 }
 
+/**
+ * Draws floating mood emoticons above agents.
+ * @param ctx - The canvas rendering context.
+ * @param agent - The agent to draw mood for.
+ * @param tick - The animation tick.
+ */
 export function drawAgentMood(
   ctx: CanvasRenderingContext2D,
   agent: Agent,
@@ -168,13 +173,11 @@ export function drawAgentMood(
   const mx = px + 24;
   const my = py - 10 + bounce;
 
-  // Bubble
   ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
   ctx.beginPath();
   ctx.arc(mx, my, 10, 0, Math.PI * 2);
   ctx.fill();
   
-  // Icon mapping
   const icons: Record<string, string> = {
     "chaos": "⚡",
     "fire": "💀",
@@ -189,6 +192,13 @@ export function drawAgentMood(
   ctx.fillText(icons[agent.metadata.mood] || "❓", mx, my);
 }
 
+/**
+ * Draws a stylized dialogue bubble.
+ * @param ctx - The canvas rendering context.
+ * @param x - The center X coordinate.
+ * @param y - The center Y coordinate.
+ * @param text - The dialogue text.
+ */
 export function drawDialogueBubble(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -218,6 +228,12 @@ export function drawDialogueBubble(
   ctx.textAlign = "start";
 }
 
+/**
+ * Renders dialogue for an agent if active.
+ * @param ctx - The canvas rendering context.
+ * @param agent - The agent speaking.
+ * @param tick - The animation tick.
+ */
 export function drawAgentDialogue(
   ctx: CanvasRenderingContext2D,
   agent: Agent,
@@ -232,6 +248,14 @@ export function drawAgentDialogue(
   drawDialogueBubble(ctx, px + TILE_SIZE / 2, ay, agent.dialogue);
 }
 
+/**
+ * Draws a static miniature of an agent for UI displays.
+ * @param ctx - The canvas rendering context.
+ * @param agent - The agent to draw.
+ * @param x - The X position.
+ * @param y - The Y position.
+ * @param size - The target size.
+ */
 export function drawAgentMiniature(
   ctx: CanvasRenderingContext2D,
   agent: Agent,
@@ -256,6 +280,11 @@ export function drawAgentMiniature(
   ctx.restore();
 }
 
+/**
+ * Generates a Base64 image URL for an agent miniature.
+ * @param agent - The agent to capture.
+ * @returns The data URL string.
+ */
 export function getAgentMiniatureDataUrl(agent: Agent): string {
   const canvas = document.createElement("canvas");
   canvas.width = 32;

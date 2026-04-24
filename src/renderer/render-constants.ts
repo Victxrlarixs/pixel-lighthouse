@@ -1,11 +1,8 @@
-// ============================================================
-// Render Constants & Theme Definitions
-// ============================================================
-
 import { SystemState, AgentRole } from "../core/types";
 
 export const TILE_SIZE = 48;
 
+/** Theme color definitions for different system states */
 export const STATE_COLORS = {
   [SystemState.STABLE]: {
     accent: "#7aa2f7",
@@ -36,6 +33,7 @@ export const STATE_COLORS = {
   },
 };
 
+/** Palette for specific performance metrics */
 export const HIGHLIGHT_COLORS: Record<string, string> = {
   LCP: "#f7768e",
   FCP: "#7aa2f7",
@@ -43,6 +41,7 @@ export const HIGHLIGHT_COLORS: Record<string, string> = {
   CLS: "#9ece6a",
 };
 
+/** Mapping of agent roles to their uniform colors */
 export const ROLE_SHIRT_COLORS: Record<string, string> = {
   [AgentRole.PERFORMANCE_LEAD]: "#7aa2f7",
   [AgentRole.SRE]: "#bb9af7",
@@ -53,6 +52,10 @@ export const ROLE_SHIRT_COLORS: Record<string, string> = {
   [AgentRole.FIREFIGHTER]: "#ff9e64",
 };
 
+/**
+ * Gets the color palette for a given system state.
+ * @param state - The current system state.
+ */
 export function getStateColors(state: SystemState) {
   return STATE_COLORS[state];
 }

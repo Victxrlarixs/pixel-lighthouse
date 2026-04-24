@@ -1,37 +1,26 @@
-import { atom, computed } from "nanostores";
-import type { SystemSnapshot, Agent, SystemState } from "../core/types";
+import { atom } from "nanostores";
+import type { SystemSnapshot, Agent } from "../core/types";
 
-// Raw Simulation State
-export const $performanceScore = atom<number>(100);
+/** Global state for the overall performance score */
+export const $performanceScore = atom<number>(0);
+
+/** Global state for the current system snapshot */
 export const $systemSnapshot = atom<SystemSnapshot | null>(null);
+
+/** Global state for the list of active agents */
 export const $agents = atom<Agent[]>([]);
+
+/** UI State: Night mode toggle */
 export const $isNightMode = atom<boolean>(false);
+
+/** UI State: Active scanning status */
 export const $isScanning = atom<boolean>(false);
-export const $scanProgress = atom<number>(0);
+
+/** UI State: Performance score history for graphing */
 export const $history = atom<number[]>([]);
 
-// NEW: Interactive State
+/** UI State: Currently hovered metric key */
 export const $hoveredMetric = atom<string | null>(null);
+
+/** UI State: Currently selected metric key */
 export const $selectedMetric = atom<string | null>(null);
-
-// Derived State (Computed)
-export const $systemState = computed(
-  $systemSnapshot,
-  (snap) => snap?.state || "STABLE",
-);
-
-export const $isFeverMode = computed($performanceScore, (score) => score >= 90);
-
-// Actions
-export function updateScore(score: number) {
-  $performanceScore.set(score);
-}
-
-export function setNightMode(on: boolean) {
-  $isNightMode.set(on);
-}
-
-export function setScanning(on: boolean) {
-  $isScanning.set(on);
-  if (!on) $scanProgress.set(0);
-}

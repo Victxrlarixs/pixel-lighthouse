@@ -1,36 +1,35 @@
-// ============================================================
-// Event Engine
-// Maintains an event history log
-// ============================================================
+import {
+  type SystemSnapshot,
+  type SystemEvent,
+} from "../core/types";
 
-import type { SystemEvent, SystemSnapshot } from "../core/types";
-
-const MAX_EVENTS = 50;
 let eventLog: SystemEvent[] = [];
 
 /**
- * Process a snapshot and collect its events into the log.
+ * Processes a system snapshot to generate relevant events.
+ * @param snapshot - The snapshot to analyze.
  */
 export function processSnapshot(snapshot: SystemSnapshot): void {
-  for (const event of snapshot.events) {
-    eventLog.unshift(event);
-  }
-  // Trim
-  if (eventLog.length > MAX_EVENTS) {
-    eventLog = eventLog.slice(0, MAX_EVENTS);
+  const { metrics, state } = snapshot;
+
+  if (state !== "STABLE") {
+    const event: SystemEvent = {
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: Date.now(),
+      type: state,
+      severity: state === "FIRE" ? "critical" : "warning",
+      message: state === "FIRE" ? "CRITICAL PERFORMANCE DEGRADATION" : "PERFORMANCE REGRESSION DETECTED",
+      category: "Lighthouse",
+    };
+    eventLog.push(event);
+    snapshot.activeEvents.push(event);
   }
 }
 
 /**
- * Get the full event log (newest first).
+ * Retrieves the global log of system events.
+ * @returns Array of system events.
  */
 export function getEventLog(): SystemEvent[] {
-  return [...eventLog];
-}
-
-/**
- * Clear the event log.
- */
-export function clearEventLog(): void {
-  eventLog = [];
+  return eventLog;
 }
