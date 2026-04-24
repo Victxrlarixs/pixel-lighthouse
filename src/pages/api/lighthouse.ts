@@ -1,10 +1,12 @@
 // ============================================================
-// Lighthouse API Endpoint
+// Lighthouse API Endpoint — WINDOWS COMPATIBILITY FIX
 // ============================================================
 
 import type { APIRoute } from "astro";
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
+import lighthouse from "lighthouse";
+import * as chromeLauncher from "chrome-launcher";
+import path from "node:path";
+import fs from "node:fs";
 
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
@@ -17,40 +19,43 @@ export const GET: APIRoute = async ({ request }) => {
     });
   }
 
+  // Windows EPERM Fix: Use a local directory for Chrome profile instead of %TEMP%
+  const userDataDir = path.join(process.cwd(), ".lighthouse-profile");
+  if (!fs.existsSync(userDataDir)) {
+    fs.mkdirSync(userDataDir, { recursive: true });
+  }
+
+  console.log(`[Lighthouse API] Starting audit for: ${targetUrl}`);
+
+  let chrome: any;
   try {
-    const chromeLauncher = require("chrome-launcher");
-    const lighthouse = require("lighthouse");
-
-    // Handle both ESM and CJS exports
-    const lh =
-      typeof lighthouse === "function" ? lighthouse : lighthouse.default;
-
-    if (typeof lh !== "function") {
-      throw new Error("Lighthouse module could not be resolved as a function");
-    }
-
-    const chrome = await chromeLauncher.launch({
+    // 1. Launch Chrome with custom userDataDir
+    console.log("[Lighthouse API] Launching Chrome...");
+    chrome = await chromeLauncher.launch({
       chromeFlags: ["--headless", "--no-sandbox", "--disable-gpu"],
+      userDataDir: userDataDir, // This bypasses the permission issues in AppData/Local/Temp
     });
+    console.log(`[Lighthouse API] Chrome launched on port: ${chrome.port}`);
 
+    // 2. Run Lighthouse
     const options = {
       port: chrome.port,
-      output: "json",
+      output: "json" as const,
       onlyCategories: ["performance"],
     };
 
-    const result = await lh(targetUrl, options);
-
-    await chrome.kill();
+    console.log("[Lighthouse API] Running Lighthouse...");
+    const result = await lighthouse(targetUrl, options);
 
     if (!result || !result.lhr) {
-      throw new Error("Lighthouse returned no results");
+      throw new Error("Lighthouse returned no results (lhr is missing)");
     }
 
     const { lhr } = result;
     const perf = lhr.categories.performance;
     const audits = lhr.audits;
 
+    // 3. Extract Metrics
     const metrics = {
       performanceScore: Math.round((perf?.score ?? 0) * 100),
       fcp: audits["first-contentful-paint"]?.numericValue ?? 0,
@@ -61,15 +66,33 @@ export const GET: APIRoute = async ({ request }) => {
       url: targetUrl,
     };
 
+    console.log(`[Lighthouse API] Audit complete. Score: ${metrics.performanceScore}`);
+
     return new Response(JSON.stringify(metrics), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("Lighthouse error:", error.message);
+    console.error("[Lighthouse API] Critical error:", error);
+    
     return new Response(
-      JSON.stringify({ error: "Lighthouse failed", message: error.message }),
+      JSON.stringify({ 
+        error: "Lighthouse failed", 
+        message: error.message,
+        details: "Possible EPERM or Timeout. Check terminal logs."
+      }),
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
+  } finally {
+    if (chrome && typeof chrome.kill === "function") {
+      console.log("[Lighthouse API] Killing Chrome...");
+      try {
+        await chrome.kill();
+      } catch (e) {
+        console.error("Failed to kill Chrome instance:", e);
+      }
+    }
   }
 };
+
+

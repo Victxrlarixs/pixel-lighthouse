@@ -27,6 +27,12 @@ function generateDemoMetrics(url: string): LighthouseMetrics {
  * Falls back to demo data if the server is unavailable.
  */
 export async function fetchMetrics(url: string): Promise<LighthouseMetrics> {
+  // 1. Basic URL Validation
+  const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
+  if (!url || !urlPattern.test(url)) {
+    throw new Error("INVALID_URL");
+  }
+
   try {
     const response = await fetch(
       `/api/lighthouse?url=${encodeURIComponent(url)}`,

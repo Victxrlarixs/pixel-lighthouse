@@ -181,6 +181,15 @@ export function drawTileTop(
       ctx.strokeStyle = c.wallLight;
       ctx.strokeRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2);
       break;
+    case TileType.SOFA:
+      ctx.fillStyle = "#455a64"; // Sofa base
+      ctx.fillRect(px + 2, py + 10, TILE_SIZE - 4, TILE_SIZE - 14);
+      ctx.fillStyle = "#607d8b"; // Backrest
+      ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, 12);
+      ctx.fillStyle = "#37474f"; // Arms
+      ctx.fillRect(px + 2, py + 14, 6, 20);
+      ctx.fillRect(px + TILE_SIZE - 8, py + 14, 6, 20);
+      break;
   }
 }
 
@@ -421,6 +430,69 @@ export function drawAgentBody(
       ctx.fillRect(px + 28, ey, 4, 4);
     }
   }
+
+  // --- Accessories ---
+  ctx.save();
+  const rx = px + 14;
+  const ry = ay + 6;
+
+  if (agent.role.includes("SRE") || agent.role.includes("Infrastructure")) {
+    ctx.fillStyle = "#ffd600";
+    ctx.fillRect(rx - 2, ry - 4, 24, 8);
+    ctx.fillRect(rx - 4, ry + 2, 28, 2);
+  }
+
+  if (agent.role.includes("Lead")) {
+    const tx = agent.direction === "right" ? bodyX + bodyWidth : bodyX - 10;
+    ctx.fillStyle = "#1a1b26";
+    ctx.fillRect(tx, ay + 20, 10, 14);
+    ctx.fillStyle = "#7aa2f7";
+    ctx.fillRect(tx + 2, ay + 22, 6, 10);
+  }
+
+  if (agent.role.includes("Database")) {
+    const cx = agent.direction === "left" ? bodyX - 8 : bodyX + bodyWidth;
+    ctx.fillStyle = "#f0f0f0";
+    ctx.fillRect(cx, ay + 22, 8, 8);
+    ctx.fillStyle = "#795548";
+    ctx.fillRect(cx + 2, ay + 22, 4, 2);
+  }
+  ctx.restore();
+}
+
+/** Draw floating mood emoticon above agent */
+export function drawAgentMood(
+  ctx: CanvasRenderingContext2D,
+  agent: any,
+  tick: number,
+) {
+  if (!agent.metadata?.mood) return;
+  
+  const px = agent.x * 48; // TILE_SIZE
+  const py = agent.y * 48;
+  const bounce = Math.sin(tick * 0.1) * 4;
+  const mx = px + 24;
+  const my = py - 10 + bounce;
+
+  // Bubble
+  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.beginPath();
+  ctx.arc(mx, my, 10, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Icon mapping
+  const icons: Record<string, string> = {
+    "chaos": "⚡",
+    "fire": "💀",
+    "happy": "💚",
+    "working": "⏳",
+    "coffee": "☕"
+  };
+  
+  ctx.font = "14px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(icons[agent.metadata.mood] || "❓", mx, my);
 }
 
 export function drawDialogueBubble(

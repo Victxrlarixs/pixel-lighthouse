@@ -10,7 +10,7 @@ export default defineConfig({
   }),
   vite: {
     ssr: {
-      noExternal: ['lighthouse', 'chrome-launcher']
+      external: ['lighthouse', 'chrome-launcher']
     }
   }
 });

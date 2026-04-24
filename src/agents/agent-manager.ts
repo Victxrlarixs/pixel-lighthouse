@@ -77,36 +77,37 @@ const FIELD_BEHAVIORS: Record<string, string[]> = {
     "EVACUATE RACK 2!",
     "FIRE EXTINGUISHER READY!",
   ],
-};const LOCATIONS = {
+};export const LOCATIONS = {
   DESKS: [
     { x: 1, y: 9 }, { x: 2, y: 9 }, { x: 3, y: 9 },
-    { x: 5, y: 9 }, { x: 6, y: 9 }, { x: 7, y: 9 }
+    { x: 5, y: 9 }, { x: 6, y: 9 }, { x: 7, y: 9 },
+    { x: 9, y: 9 }, { x: 10, y: 9 }, { x: 11, y: 9 },
+    { x: 13, y: 9 }, { x: 14, y: 9 }, { x: 15, y: 9 },
   ],
-  // Targets are now one tile in front of the object
   RACKS: [
-    { x: 2, y: 6 }, { x: 6, y: 6 }, { x: 10, y: 6 }, { x: 14, y: 6 }
+    { x: 1, y: 5 }, { x: 2, y: 5 }, { x: 3, y: 5 },
+    { x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 },
+    { x: 9, y: 5 }, { x: 10, y: 5 }, { x: 11, y: 5 },
+    { x: 13, y: 5 }, { x: 14, y: 5 }, { x: 15, y: 5 },
   ],
   SERVERS: [
-    { x: 2, y: 4 }, { x: 8, y: 4 }, { x: 14, y: 4 }
+    { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 7, y: 3 }, 
+    { x: 8, y: 3 }, { x: 14, y: 3 }, { x: 15, y: 3 }
   ],
+  COFFEE: [{ x: 1, y: 10 }, { x: 3, y: 10 }],
   DOORS: [{ x: 8, y: 12 }],
-  COFFEE: [{ x: 15, y: 10 }]
+  SOFAS: [{ x: 5, y: 10 }, { x: 6, y: 10 }, { x: 13, y: 11 }],
 };
 
-function isWalkable(x: number, y: number): boolean {
-  if (isNaN(x) || isNaN(y)) return false;
-  const col = Math.floor(x);
-  const row = Math.floor(y);
-  if (col < 0 || col >= MAP_COLS || row < 0 || row >= MAP_ROWS) return false;
-  const tile = DATA_CENTER_MAP[row][col];
-  
-  // Stricter walkable areas: Floor, Carpet, and interaction spots
+export function isWalkable(x: number, y: number): boolean {
+  const tx = Math.floor(x);
+  const ty = Math.floor(y);
+  if (tx < 0 || tx >= MAP_COLS || ty < 0 || ty >= MAP_ROWS) return false;
+  const tile = DATA_CENTER_MAP[ty][tx];
+  // Strictly FLOOR or CARPET only
   return [
     TileType.FLOOR,
     TileType.CARPET,
-    TileType.CABLE_H,
-    TileType.SLIDING_DOOR,
-    TileType.CHAIR
   ].includes(tile);
 }
 
@@ -133,9 +134,21 @@ function makeAgent(id: string, role: AgentRole, x: number, y: number, physical: 
   } as any;
 }
 
+const LIGHTHOUSE_STEPS = [
+  "WARMING UP CHROME INSTANCE...",
+  "NAVIGATING TO TARGET URL...",
+  "MEASURING FIRST CONTENTFUL PAINT...",
+  "ANALYZING LARGEST CONTENTFUL PAINT...",
+  "TRACING MAIN THREAD ACTIVITY...",
+  "CALCULATING CUMULATIVE LAYOUT SHIFT...",
+  "ESTIMATING TOTAL BLOCKING TIME...",
+  "GENERATING JSON ARTIFACTS...",
+  "COMPILING FINAL SCORE...",
+];
+
 const CHAOS_DIALOGUES = [
-  "@@@@@!!!", "#!$%#!!", "! ! !!", "WHY IS THIS SLOW?!",
-  "OOM KILLER INBOUND!", "SEGFAULT!", "KABOOM!", "$#!%^@!!"
+  "@@@@@!!!", "####!!$#", "! ! !!", "SEGFAULT!", 
+  "OOM KILLER!", "SYSTEM HALTED!", "#$#@!#!", "STRESS 100%!"
 ];
 
 let lastDialogueTime = 0;
@@ -145,11 +158,53 @@ export function updateAgents(agents: Agent[], snapshot: SystemSnapshot | null, i
   const isChaos = snapshot?.state === SystemState.CHAOS || snapshot?.state === SystemState.FIRE;
 
   for (const agent of agents) {
+    const meta = (agent as any).metadata;
     let phaseKey = snapshot?.state || "INITIAL";
     if (isScanning) phaseKey = "SCAN_PHASE";
     
-    // Logic for triggering dialogues (Frequent in Chaos)
-    const dialogueChance = isChaos ? 0.05 : 0.01;
+    // --- Behavioral Choreography ---
+    if (isScanning) {
+      // 1. DURING AUDIT: All to desks + Lighthouse Dialogues
+      if (agent.targetX !== agent.homeX || agent.targetY !== agent.homeY) {
+        agent.targetX = agent.homeX;
+        agent.targetY = agent.homeY;
+        meta.taskTimer = 60; // Locked at desk
+      }
+      meta.mood = "working";
+      
+      // Sequential technical dialogues based on progress
+      const stepIndex = Math.min(
+        Math.floor(scanElapsed / 1.5), 
+        LIGHTHOUSE_STEPS.length - 1
+      );
+      if (now - lastDialogueTime > 1500) {
+        agent.dialogue = LIGHTHOUSE_STEPS[stepIndex];
+        agent.dialogueTimer = 2;
+        lastDialogueTime = now;
+      }
+      
+      meta.wasScanning = true;
+    } else {
+      if (meta.wasScanning) {
+        // 2. JUST FINISHED: All to servers/racks
+        const pool = Math.random() > 0.5 ? LOCATIONS.RACKS : LOCATIONS.SERVERS;
+        const target = pool[Math.floor(Math.random() * pool.length)];
+        agent.targetX = target.x;
+        agent.targetY = target.y;
+        meta.taskTimer = 5 + Math.random() * 5; // Check for a bit
+        meta.wasScanning = false;
+        meta.mood = "happy";
+      } else {
+        // General Moods based on system health
+        if (snapshot?.state === SystemState.FIRE) meta.mood = "fire";
+        else if (snapshot?.state === SystemState.CHAOS) meta.mood = "chaos";
+        else if (snapshot?.metrics && snapshot.metrics.performanceScore > 90) meta.mood = "happy";
+        else meta.mood = agent.state === AgentState.IDLE ? "coffee" : null;
+      }
+    }
+
+    // Logic for triggering dialogues
+    const dialogueChance = isChaos ? 0.05 : (isScanning ? 0.03 : 0.01);
     if (!agent.dialogue && now - lastDialogueTime > 1500 && Math.random() < dialogueChance) {
       if (isChaos) {
         agent.dialogue = CHAOS_DIALOGUES[Math.floor(Math.random() * CHAOS_DIALOGUES.length)];
@@ -160,16 +215,17 @@ export function updateAgents(agents: Agent[], snapshot: SystemSnapshot | null, i
       agent.dialogueTimer = isChaos ? 1.5 : 3;
       lastDialogueTime = now;
     }
-    agent.speed = isChaos ? 3.5 : (isScanning ? 2.2 : 1.2);
+    agent.speed = isChaos ? 3.5 : (isScanning ? 2.5 : 1.6);
   }
 }
 
-export function tickAgents(agents: Agent[], dt: number): void {
-  const occupiedTiles = new Set<string>();
+export function tickAgents(agents: Agent[], dt: number, isChaos: boolean = false): void {
+  // 1. Map of occupied tiles (where agents are OR where they are going)
+  const reservedTiles = new Set<string>();
   for (const a of agents) {
-    occupiedTiles.add(`${Math.floor(a.x)},${Math.floor(a.y)}`);
+    reservedTiles.add(`${Math.floor(a.x)},${Math.floor(a.y)}`);
     if (a.state === AgentState.MOVING) {
-      occupiedTiles.add(`${Math.floor(a.targetX)},${Math.floor(a.targetY)}`);
+      reservedTiles.add(`${Math.floor(a.targetX)},${Math.floor(a.targetY)}`);
     }
   }
 
@@ -192,15 +248,28 @@ export function tickAgents(agents: Agent[], dt: number): void {
       let nextX = agent.x;
       let nextY = agent.y;
 
+      // Habbo Logic: Only move if the NEXT tile is NOT reserved by someone else
       if (Math.abs(dx) > 0.01) {
         const testX = agent.x + Math.sign(dx) * Math.min(step, Math.abs(dx));
-        const key = `${Math.floor(testX)},${Math.floor(agent.y)}`;
-        if (isWalkable(testX, agent.y) && !occupiedTiles.has(key)) nextX = testX;
+        const tx = Math.floor(testX);
+        const ty = Math.floor(agent.y);
+        const key = `${tx},${ty}`;
+        const isSelfTile = tx === Math.floor(agent.x) && ty === Math.floor(agent.y);
+        
+        if (isWalkable(testX, agent.y) && (isSelfTile || !reservedTiles.has(key))) {
+          nextX = testX;
+        }
       }
       if (Math.abs(dy) > 0.01) {
         const testY = agent.y + Math.sign(dy) * Math.min(step, Math.abs(dy));
-        const key = `${Math.floor(nextX)},${Math.floor(testY)}`;
-        if (isWalkable(nextX, testY) && !occupiedTiles.has(key)) nextY = testY;
+        const tx = Math.floor(nextX);
+        const ty = Math.floor(testY);
+        const key = `${tx},${ty}`;
+        const isSelfTile = tx === Math.floor(nextX) && ty === Math.floor(agent.y);
+
+        if (isWalkable(nextX, testY) && (isSelfTile || !reservedTiles.has(key))) {
+          nextY = testY;
+        }
       }
 
       agent.x = nextX;
@@ -215,20 +284,25 @@ export function tickAgents(agents: Agent[], dt: number): void {
       if (meta.taskTimer > 0) {
         meta.taskTimer -= dt;
         agent.state = AgentState.WORKING;
-        if (agent.y < 7) agent.direction = "up";
       } else {
         agent.state = AgentState.IDLE;
-        const moveChance = 0.02; // More active even in idle
+        const moveChance = isChaos ? 0.9 : 0.4; 
 
         if (Math.random() < moveChance) {
-          const pools = [LOCATIONS.RACKS, LOCATIONS.SERVERS, LOCATIONS.DESKS, LOCATIONS.COFFEE];
+          const pools = [
+            LOCATIONS.RACKS, LOCATIONS.SERVERS, LOCATIONS.DESKS, 
+            LOCATIONS.COFFEE, [{x: 5, y: 10}, {x: 6, y: 10}]
+          ];
           const pool = pools[Math.floor(Math.random() * pools.length)];
           const t = pool[Math.floor(Math.random() * pool.length)];
           
-          if (!occupiedTiles.has(`${t.x},${t.y}`)) {
+          const targetKey = `${t.x},${t.y}`;
+          // CRITICAL: Only pick target if NO ONE ELSE is there or going there
+          if (!reservedTiles.has(targetKey)) {
             agent.targetX = t.x;
             agent.targetY = t.y;
-            meta.taskTimer = 1 + Math.random() * 3;
+            meta.taskTimer = isChaos ? 0.01 : (0.1 + Math.random() * 0.3);
+            reservedTiles.add(targetKey); // Reserve it immediately
           }
         }
       }

@@ -16,6 +16,7 @@ import {
   drawTileLights,
   drawAgentBody,
   drawAgentDialogue,
+  drawAgentMood,
   drawSmoke,
   drawFire,
   drawTrendGraph,
@@ -127,6 +128,7 @@ export class CanvasRenderer {
 
     for (const agent of agents) {
       drawAgentDialogue(ctx, agent, this.tick);
+      drawAgentMood(ctx, agent, this.tick);
     }
 
     if (state === SystemState.FIRE || state === SystemState.CHAOS) {
@@ -216,12 +218,15 @@ export class CanvasRenderer {
 
     for (const agent of agents) {
       drawAgentDialogue(ctx, agent, this.tick);
+      drawAgentMood(ctx, agent, this.tick);
     }
 
-    if (history.length > 0)
-      drawTrendGraph(ctx, 10, MAP_ROWS * TILE_SIZE - 75, history);
-
     ctx.restore();
+    
+    // Hide history/telemetry during active scanning
+    if (!isScanning && history.length > 0) {
+      drawTrendGraph(ctx, 10, MAP_ROWS * TILE_SIZE - 75, history);
+    }
 
     if (!isScanning) {
       ctx.fillStyle = "rgba(0,0,0,0.85)";

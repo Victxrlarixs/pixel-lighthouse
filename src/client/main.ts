@@ -60,7 +60,10 @@ export function initApp() {
   });
 
   $systemSnapshot.subscribe((snap) => {
-    if (!snap) return;
+    if (!snap) {
+      metricsHud?.classList.add("hidden");
+      return;
+    }
     metricsHud?.classList.remove("hidden");
     const s = snap.metrics.performanceScore;
     if (barLcp && valLcp) updateBar(barLcp, valLcp, s);
@@ -70,6 +73,9 @@ export function initApp() {
   });
 
   $isScanning.subscribe((scanning) => {
+    if (scanning) {
+      metricsHud?.classList.add("hidden");
+    }
     if (!btnRun) return;
     btnRun.innerHTML = scanning
       ? '<i class="fas fa-spinner fa-spin"></i>'

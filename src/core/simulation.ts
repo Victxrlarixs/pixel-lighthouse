@@ -103,8 +103,9 @@ export class SimulationController {
     const scanElapsed = this.scanning
       ? (performance.now() - this.scanStartTime) / 1000
       : 0;
+    const isChaos = this.snapshot?.state === SystemState.CHAOS || this.snapshot?.state === SystemState.FIRE;
     updateAgents(this.agents, this.snapshot, this.scanning, scanElapsed);
-    tickAgents(this.agents, dt);
+    tickAgents(this.agents, dt, isChaos);
 
     const history = this.getHistoryScores();
     $history.set(history);
@@ -144,7 +145,12 @@ export class SimulationController {
 
   async runScan(url: string): Promise<SystemSnapshot> {
     if (this.scanning) throw new Error("Scan already in progress");
+    
+    // Clear state for neutral scan phase
+    this.snapshot = null;
     this.forcedScore = null;
+    $systemSnapshot.set(null);
+    $performanceScore.set(0); 
     if (!this.audioStarted) {
       audio.startAmbience();
       this.audioStarted = true;
@@ -152,6 +158,12 @@ export class SimulationController {
     this.scanning = true;
     $isScanning.set(true);
     this.scanStartTime = performance.now();
+    
+    // Clear all existing dialogues
+    this.agents.forEach(a => {
+      a.dialogue = undefined;
+      a.dialogueTimer = 0;
+    });
 
     try {
       const metrics = await fetchMetrics(url);
@@ -162,10 +174,20 @@ export class SimulationController {
       $systemSnapshot.set(this.snapshot);
       $performanceScore.set(this.snapshot.metrics.performanceScore);
       return this.snapshot;
-    } catch (error) {
+    } catch (error: any) {
       this.scanning = false;
       $isScanning.set(false);
-      this.forceScore(Math.random() * 20 + 10);
+      
+      if (error.message === "INVALID_URL") {
+        // Trigger Critical Error state
+        this.forceScore(0);
+        this.agents.forEach(a => {
+          a.dialogue = "INVALID URL TARGET!";
+          a.dialogueTimer = 4; // Auto-clear after 4s
+        });
+      } else {
+        this.forceScore(Math.random() * 20 + 10);
+      }
       throw error;
     }
   }
