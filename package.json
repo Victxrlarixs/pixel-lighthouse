@@ -17,5 +17,9 @@
     "chrome-launcher": "^1.2.1",
     "lighthouse": "^13.1.0",
     "nanostores": "^1.3.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3",
+    "prettier-plugin-astro": "^0.14.1"
   }
 }

@@ -4,20 +4,20 @@
 
 /** System health states derived from Lighthouse scores */
 export enum SystemState {
-  STABLE = 'STABLE',
-  CHAOS = 'CHAOS',
-  FIRE = 'FIRE',
+  STABLE = "STABLE",
+  CHAOS = "CHAOS",
+  FIRE = "FIRE",
 }
 
 /** Raw Lighthouse metric data */
 export interface LighthouseMetrics {
-  performanceScore: number;       // 0–100
-  fcp: number;                    // First Contentful Paint (ms)
-  lcp: number;                    // Largest Contentful Paint (ms)
-  cls: number;                    // Cumulative Layout Shift
-  tbt: number;                    // Total Blocking Time (ms)
-  timestamp: number;              // Unix timestamp
-  url: string;                    // Target URL
+  performanceScore: number; // 0–100
+  fcp: number; // First Contentful Paint (ms)
+  lcp: number; // Largest Contentful Paint (ms)
+  cls: number; // Cumulative Layout Shift
+  tbt: number; // Total Blocking Time (ms)
+  timestamp: number; // Unix timestamp
+  url: string; // Target URL
 }
 
 /** Interpreted snapshot used by the simulation */
@@ -26,29 +26,29 @@ export interface SystemSnapshot {
   metrics: LighthouseMetrics;
   previousState: SystemState | null;
   transitionTriggered: boolean;
-  instabilityFactor: number;      // 0–1, composite instability
+  instabilityFactor: number; // 0–1, composite instability
   events: SystemEvent[];
 }
 
 /** Agent roles in the data center */
 export enum AgentRole {
-  PERFORMANCE_LEAD = 'Performance Lead',
-  SRE = 'SRE',
-  INFRA_ENGINEER = 'Infra Engineer',
-  NETWORK_SPECIALIST = 'Network Specialist',
-  SYSTEM_ANALYST = 'System Analyst',
-  DBA = 'DBA',
-  FIREFIGHTER = 'Firefighter',
+  PERFORMANCE_LEAD = "Performance Lead",
+  SRE = "SRE",
+  INFRA_ENGINEER = "Infra Engineer",
+  NETWORK_SPECIALIST = "Network Specialist",
+  SYSTEM_ANALYST = "System Analyst",
+  DBA = "DBA",
+  FIREFIGHTER = "Firefighter",
 }
 
 /** Agent behavioral state */
 export enum AgentState {
-  IDLE = 'IDLE',
-  WORKING = 'WORKING',
-  ALERT = 'ALERT',
-  RUNNING = 'RUNNING',
-  FIREFIGHTING = 'FIREFIGHTING',
-  SCANNING = 'SCANNING',
+  IDLE = "IDLE",
+  WORKING = "WORKING",
+  ALERT = "ALERT",
+  RUNNING = "RUNNING",
+  FIREFIGHTING = "FIREFIGHTING",
+  SCANNING = "SCANNING",
 }
 
 /** An agent in the simulation */
@@ -62,7 +62,7 @@ export interface Agent {
   targetX: number;
   targetY: number;
   animationFrame: number;
-  direction: 'down' | 'up' | 'left' | 'right';
+  direction: "down" | "up" | "left" | "right";
   speed: number;
   dialogue?: string;
   dialogueTimer: number;
@@ -72,7 +72,7 @@ export interface Agent {
   // Physical attributes for diversity
   skinColor: string;
   hairColor: string;
-  bodyType: 'slim' | 'normal' | 'large';
+  bodyType: "slim" | "normal" | "large";
   isWoman: boolean;
   bio?: string;
   skills?: string[];
@@ -82,7 +82,7 @@ export interface Agent {
 export interface SystemEvent {
   id: string;
   message: string;
-  severity: 'info' | 'warning' | 'critical';
+  severity: "info" | "warning" | "critical";
   timestamp: number;
   metric?: string;
 }
@@ -131,11 +131,11 @@ export enum TileType {
 
 /** Configuration thresholds */
 export interface ThresholdConfig {
-  stableMin: number;       // Score >= this = STABLE
-  chaosMin: number;        // Score >= this & < stableMin = CHAOS
-  clsWarning: number;      // CLS threshold for instability
-  tbtWarning: number;      // TBT threshold for instability (ms)
-  pollInterval: number;    // Seconds between Lighthouse runs
+  stableMin: number; // Score >= this = STABLE
+  chaosMin: number; // Score >= this & < stableMin = CHAOS
+  clsWarning: number; // CLS threshold for instability
+  tbtWarning: number; // TBT threshold for instability (ms)
+  pollInterval: number; // Seconds between Lighthouse runs
 }
 
 /** Default thresholds */

@@ -3,7 +3,7 @@
 // Fetches Lighthouse metrics from our API endpoint
 // ============================================================
 
-import type { LighthouseMetrics } from '../core/types';
+import type { LighthouseMetrics } from "../core/types";
 
 /** Demo/fallback metrics for when Lighthouse isn't available */
 function generateDemoMetrics(url: string): LighthouseMetrics {
@@ -22,21 +22,23 @@ function generateDemoMetrics(url: string): LighthouseMetrics {
   };
 }
 
-/** 
+/**
  * Fetch Lighthouse metrics from the server API.
  * Falls back to demo data if the server is unavailable.
  */
 export async function fetchMetrics(url: string): Promise<LighthouseMetrics> {
   try {
-    const response = await fetch(`/api/lighthouse?url=${encodeURIComponent(url)}`);
+    const response = await fetch(
+      `/api/lighthouse?url=${encodeURIComponent(url)}`,
+    );
     if (!response.ok) {
-      console.warn('Lighthouse API error, using demo data');
+      console.warn("Lighthouse API error, using demo data");
       return generateDemoMetrics(url);
     }
     const data = await response.json();
     return data as LighthouseMetrics;
   } catch (err) {
-    console.warn('Lighthouse API unreachable, using demo data:', err);
+    console.warn("Lighthouse API unreachable, using demo data:", err);
     return generateDemoMetrics(url);
   }
 }
@@ -51,7 +53,10 @@ export function getDemoMetrics(url: string): LighthouseMetrics {
 /**
  * Generate scenario-based demo metrics that cycle through states
  */
-export function getScenarioMetrics(url: string, tick: number): LighthouseMetrics {
+export function getScenarioMetrics(
+  url: string,
+  tick: number,
+): LighthouseMetrics {
   const cycle = tick % 60;
 
   // Cycle: 0-20 STABLE, 20-40 CHAOS, 40-55 FIRE, 55-60 recovery

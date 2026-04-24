@@ -1,5 +1,5 @@
-import { atom, computed } from 'nanostores';
-import type { SystemSnapshot, Agent, SystemState } from '../core/types';
+import { atom, computed } from "nanostores";
+import type { SystemSnapshot, Agent, SystemState } from "../core/types";
 
 // Raw Simulation State
 export const $performanceScore = atom<number>(100);
@@ -15,7 +15,10 @@ export const $hoveredMetric = atom<string | null>(null);
 export const $selectedMetric = atom<string | null>(null);
 
 // Derived State (Computed)
-export const $systemState = computed($systemSnapshot, (snap) => snap?.state || 'STABLE');
+export const $systemState = computed(
+  $systemSnapshot,
+  (snap) => snap?.state || "STABLE",
+);
 
 export const $isFeverMode = computed($performanceScore, (score) => score >= 90);
 

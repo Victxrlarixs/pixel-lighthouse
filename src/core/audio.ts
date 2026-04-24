@@ -10,7 +10,9 @@ export class AudioEngine {
 
   private init() {
     if (this.ctx) return;
-    this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    this.ctx = new (
+      window.AudioContext || (window as any).webkitAudioContext
+    )();
   }
 
   /** Start ambient server fan noise */
@@ -19,7 +21,11 @@ export class AudioEngine {
     if (!this.ctx) return;
 
     const bufferSize = 2 * this.ctx.sampleRate;
-    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const noiseBuffer = this.ctx.createBuffer(
+      1,
+      bufferSize,
+      this.ctx.sampleRate,
+    );
     const output = noiseBuffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
       output[i] = Math.random() * 2 - 1;
@@ -30,7 +36,7 @@ export class AudioEngine {
     this.noiseNode.loop = true;
 
     this.fanNode = this.ctx.createBiquadFilter();
-    this.fanNode.type = 'lowpass';
+    this.fanNode.type = "lowpass";
     this.fanNode.frequency.value = 400;
 
     const gain = this.ctx.createGain();
@@ -44,7 +50,7 @@ export class AudioEngine {
 
   setAmbienceIntensity(val: number) {
     if (this.fanNode) {
-      this.fanNode.frequency.value = 400 + (val * 1000);
+      this.fanNode.frequency.value = 400 + val * 1000;
     }
   }
 
@@ -56,11 +62,14 @@ export class AudioEngine {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc.type = 'square';
+    osc.type = "square";
     osc.frequency.value = freq;
 
     gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+    gain.gain.exponentialRampToValueAtTime(
+      0.01,
+      this.ctx.currentTime + duration,
+    );
 
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -73,15 +82,15 @@ export class AudioEngine {
   playAlarm() {
     this.init();
     if (!this.ctx) return;
-    
+
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc.type = 'sawtooth';
+    osc.type = "sawtooth";
     osc.frequency.setValueAtTime(440, now);
     osc.frequency.exponentialRampToValueAtTime(880, now + 0.5);
-    
+
     gain.gain.setValueAtTime(0.05, now);
     gain.gain.linearRampToValueAtTime(0, now + 0.5);
 

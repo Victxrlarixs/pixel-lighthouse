@@ -1,97 +1,192 @@
 ---
 // Pixel Insights — Dynamic Console Feedback
-import '../styles/global.css';
+import "../styles/global.css";
 ---
 
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lighthouse Pixel - Performance Site Telemetry</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='8' y='4' width='16' height='24' fill='%231a1b26' stroke='%2324283b' stroke-width='2'/><rect x='10' y='8' width='12' height='2' fill='%230f111a'/><circle cx='12' cy='9' r='1' fill='%239ece6a'/><rect x='10' y='14' width='12' height='2' fill='%230f111a'/><circle cx='18' cy='15' r='1' fill='%23f7768e'/><rect x='10' y='20' width='12' height='2' fill='%230f111a'/><circle cx='15' cy='21' r='1' fill='%237aa2f7'/></svg>" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-</head>
-<body>
-  <div id="preloader">
-    <div class="preloader-rack">
-      <div class="rack-unit"><div class="led green active"></div><div class="led green"></div><div class="led"></div></div>
-      <div class="rack-unit"><div class="led"></div><div class="led green active"></div><div class="led"></div></div>
-      <div class="rack-unit"><div class="led green"></div><div class="led"></div><div class="led green active"></div></div>
-    </div>
-  </div>
-
-  <div class="crt-overlay"></div>
-
-  <div class="switch-container">
-    <label class="switch">
-      <input type="checkbox" id="check-night">
-      <span class="slider">
-        <span class="switch-icon sun"><i class="fas fa-sun"></i></span>
-        <span class="switch-icon moon"><i class="fas fa-moon"></i></span>
-      </span>
-    </label>
-  </div>
-
-  <div class="app-container">
-    <div class="simulation-view">
-      <canvas id="simulation-canvas"></canvas>
-      
-      <!-- Floating Telemetry HUD -->
-      <div class="metrics-hud hidden" id="metrics-hud">
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
-          <span style="font-family:'Press Start 2P'; font-size:10px; color:var(--accent-cyan); letter-spacing:1px;">PERFORMANCE METRICS</span>
-          <span id="score-val" style="font-family:'Press Start 2P'; font-size:32px; color:var(--accent-cyan);">--</span>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lighthouse Pixel - Performance Site Telemetry</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='8' y='4' width='16' height='24' fill='%231a1b26' stroke='%2324283b' stroke-width='2'/><rect x='10' y='8' width='12' height='2' fill='%230f111a'/><circle cx='12' cy='9' r='1' fill='%239ece6a'/><rect x='10' y='14' width='12' height='2' fill='%230f111a'/><circle cx='18' cy='15' r='1' fill='%23f7768e'/><rect x='10' y='20' width='12' height='2' fill='%230f111a'/><circle cx='15' cy='21' r='1' fill='%237aa2f7'/></svg>"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div id="preloader">
+      <div class="preloader-rack">
+        <div class="rack-unit">
+          <div class="led green active"></div><div class="led green"></div><div
+            class="led"
+          >
+          </div>
         </div>
-        
-        <div class="hud-row">
-          <div class="hud-label"><span>LCP</span> <span id="val-lcp">--</span></div>
-          <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-lcp" style="background:var(--accent-red);"></div></div>
+        <div class="rack-unit">
+          <div class="led"></div><div class="led green active"></div><div
+            class="led"
+          >
+          </div>
         </div>
-        <div class="hud-row">
-          <div class="hud-label"><span>FCP</span> <span id="val-fcp">--</span></div>
-          <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-fcp" style="background:var(--accent-blue);"></div></div>
+        <div class="rack-unit">
+          <div class="led green"></div><div class="led"></div><div
+            class="led green active"
+          >
+          </div>
         </div>
-        <div class="hud-row">
-          <div class="hud-label"><span>TBT</span> <span id="val-tbt">--</span></div>
-          <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-tbt" style="background:var(--accent-yellow);"></div></div>
-        </div>
-        <div class="hud-row">
-          <div class="hud-label"><span>CLS</span> <span id="val-cls">--</span></div>
-          <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-cls" style="background:var(--accent-green);"></div></div>
-        </div>
-      </div>
-      
-      <!-- Bottom-Left Simulator Widget (Toggleable) -->
-      <button class="btn-toggle-sim" id="btn-toggle-sim" title="Toggle Scenario Simulator">
-        <i class="fas fa-server"></i>
-      </button>
-      
-      <div class="floating-simulator hidden" id="floating-simulator">
-        <div style="font-family:'Press Start 2P'; font-size:10px; color:var(--text-muted); display:flex; flex-direction:column; gap:6px; min-width:140px;">
-          <span>SIMULATOR</span>
-          <span id="slider-val" style="font-size:16px; color:var(--accent-cyan);">100</span>
-        </div>
-        <input type="range" min="0" max="100" value="100" class="hud-slider" id="score-slider" style="flex:1;" />
       </div>
     </div>
 
-    <!-- Bottom Console -->
-    <div class="bottom-console">
-      <div class="console-progress-track">
-        <div class="console-progress-fill" id="console-progress-fill"></div>
-      </div>
-      <div class="console-main">
-        <div class="console-input-group">
-          <span class="terminal-prompt">></span>
-          <input type="url" id="url-input" class="url-input" placeholder="Enter URL to analyze performance..." value="https://" autofocus />
+    <div class="crt-overlay"></div>
+
+    <div class="switch-container">
+      <label class="switch">
+        <input type="checkbox" id="check-night" />
+        <span class="slider">
+          <span class="switch-icon sun"><i class="fas fa-sun"></i></span>
+          <span class="switch-icon moon"><i class="fas fa-moon"></i></span>
+        </span>
+      </label>
+    </div>
+
+    <div class="app-container">
+      <div class="simulation-view">
+        <canvas id="simulation-canvas"></canvas>
+
+        <!-- Floating Telemetry HUD -->
+        <div class="metrics-hud hidden" id="metrics-hud">
+          <div
+            style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;"
+          >
+            <span
+              style="font-family:'Press Start 2P'; font-size:10px; color:var(--accent-cyan); letter-spacing:1px;"
+              >PERFORMANCE METRICS</span
+            >
+            <span
+              id="score-val"
+              style="font-family:'Press Start 2P'; font-size:32px; color:var(--accent-cyan);"
+              >--</span
+            >
+          </div>
+
+          <div class="hud-row">
+            <div class="hud-label">
+              <span>LCP</span>
+              <span id="val-lcp">--</span>
+            </div>
+            <div class="hud-bar-bg">
+              <div
+                class="hud-bar-fill"
+                id="bar-lcp"
+                style="background:var(--accent-red);"
+              >
+              </div>
+            </div>
+          </div>
+          <div class="hud-row">
+            <div class="hud-label">
+              <span>FCP</span>
+              <span id="val-fcp">--</span>
+            </div>
+            <div class="hud-bar-bg">
+              <div
+                class="hud-bar-fill"
+                id="bar-fcp"
+                style="background:var(--accent-blue);"
+              >
+              </div>
+            </div>
+          </div>
+          <div class="hud-row">
+            <div class="hud-label">
+              <span>TBT</span>
+              <span id="val-tbt">--</span>
+            </div>
+            <div class="hud-bar-bg">
+              <div
+                class="hud-bar-fill"
+                id="bar-tbt"
+                style="background:var(--accent-yellow);"
+              >
+              </div>
+            </div>
+          </div>
+          <div class="hud-row">
+            <div class="hud-label">
+              <span>CLS</span>
+              <span id="val-cls">--</span>
+            </div>
+            <div class="hud-bar-bg">
+              <div
+                class="hud-bar-fill"
+                id="bar-cls"
+                style="background:var(--accent-green);"
+              >
+              </div>
+            </div>
+          </div>
         </div>
-        <button id="btn-run" class="btn-audit" title="RUN PERFORMANCE AUDIT">
-          <i class="fas fa-bolt"></i>
+
+        <!-- Bottom-Left Simulator Widget (Toggleable) -->
+        <button
+          class="btn-toggle-sim"
+          id="btn-toggle-sim"
+          title="Toggle Scenario Simulator"
+        >
+          <i class="fas fa-server"></i>
         </button>
+
+        <div class="floating-simulator hidden" id="floating-simulator">
+          <div
+            style="font-family:'Press Start 2P'; font-size:10px; color:var(--text-muted); display:flex; flex-direction:column; gap:6px; min-width:140px;"
+          >
+            <span>SIMULATOR</span>
+            <span
+              id="slider-val"
+              style="font-size:16px; color:var(--accent-cyan);">100</span
+            >
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value="100"
+            class="hud-slider"
+            id="score-slider"
+            style="flex:1;"
+          />
+        </div>
+      </div>
+
+      <!-- Bottom Console -->
+      <div class="bottom-console">
+        <div class="console-progress-track">
+          <div class="console-progress-fill" id="console-progress-fill"></div>
+        </div>
+        <div class="console-main">
+          <div class="console-input-group">
+            <span class="terminal-prompt">></span>
+            <input
+              type="url"
+              id="url-input"
+              class="url-input"
+              placeholder="Enter URL to analyze performance..."
+              value="https://"
+              autofocus
+            />
+          </div>
+          <button id="btn-run" class="btn-audit" title="RUN PERFORMANCE AUDIT">
+            <i class="fas fa-bolt"></i>
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script src="../client/main.ts"></script>
-</body>
+    <script src="../client/main.ts"></script>
+  </body>
 </html>

@@ -2,21 +2,31 @@
 // Simulation Controller — Easter Eggs & Demo Modes
 // ============================================================
 
-import { type SystemSnapshot, type Agent, SystemState, AgentRole, AgentState } from '../core/types';
-import { interpret, getHistory } from '../state/state-machine';
-import { processSnapshot, getEventLog } from '../core/event-engine';
-import { createAgents, updateAgents, tickAgents } from '../agents/agent-manager';
-import { fetchMetrics } from '../lighthouse/lighthouse-client';
-import { CanvasRenderer } from '../renderer/canvas-renderer';
-import { audio } from './audio';
-import { 
-  $performanceScore, 
-  $systemSnapshot, 
-  $agents, 
-  $isNightMode, 
-  $isScanning, 
-  $history 
-} from '../store/systemStore';
+import {
+  type SystemSnapshot,
+  type Agent,
+  SystemState,
+  AgentRole,
+  AgentState,
+} from "../core/types";
+import { interpret, getHistory } from "../state/state-machine";
+import { processSnapshot, getEventLog } from "../core/event-engine";
+import {
+  createAgents,
+  updateAgents,
+  tickAgents,
+} from "../agents/agent-manager";
+import { fetchMetrics } from "../lighthouse/lighthouse-client";
+import { CanvasRenderer } from "../renderer/canvas-renderer";
+import { audio } from "./audio";
+import {
+  $performanceScore,
+  $systemSnapshot,
+  $agents,
+  $isNightMode,
+  $isScanning,
+  $history,
+} from "../store/systemStore";
 
 export class SimulationController {
   private renderer!: CanvasRenderer;
@@ -46,9 +56,12 @@ export class SimulationController {
   }
 
   forceScore(score: number) {
-    if (!this.audioStarted) { audio.startAmbience(); this.audioStarted = true; }
+    if (!this.audioStarted) {
+      audio.startAmbience();
+      this.audioStarted = true;
+    }
     this.forcedScore = score;
-    
+
     this.snapshot = interpret({
       performanceScore: score,
       fcp: 200 + (100 - score) * 50,
@@ -56,9 +69,9 @@ export class SimulationController {
       cls: (100 - score) / 400,
       tbt: (100 - score) * 10,
       timestamp: Date.now(),
-      url: 'scenario-simulator'
+      url: "scenario-simulator",
     });
-    
+
     $performanceScore.set(score);
     $systemSnapshot.set(this.snapshot);
     if (this.tickCount % 20 === 0) audio.playBeep(440 + score * 5, 0.05);
@@ -72,17 +85,24 @@ export class SimulationController {
 
   private loop = (time: number) => {
     if (!this.running) return;
-    
+
     let dt = (time - this.lastTime) / 1000;
-    if (isNaN(dt) || dt <= 0 || dt > 0.1) dt = 0.016; 
+    if (isNaN(dt) || dt <= 0 || dt > 0.1) dt = 0.016;
     this.lastTime = time;
     this.tickCount++;
 
-    const currentScore = this.forcedScore !== null ? this.forcedScore : (this.snapshot ? this.snapshot.metrics.performanceScore : 0);
+    const currentScore =
+      this.forcedScore !== null
+        ? this.forcedScore
+        : this.snapshot
+          ? this.snapshot.metrics.performanceScore
+          : 0;
     const isFever = currentScore >= 90;
     this.renderer.setFeverMode(isFever);
 
-    const scanElapsed = this.scanning ? (performance.now() - this.scanStartTime) / 1000 : 0;
+    const scanElapsed = this.scanning
+      ? (performance.now() - this.scanStartTime) / 1000
+      : 0;
     updateAgents(this.agents, this.snapshot, this.scanning, scanElapsed);
     tickAgents(this.agents, dt);
 
@@ -97,7 +117,8 @@ export class SimulationController {
         if (this.tickCount % 120 === 0) audio.playAlarm();
       } else if (isFever) {
         audio.setAmbienceIntensity(0.2);
-        if (this.tickCount % 60 === 0) audio.playBeep(880 + Math.random() * 400, 0.05);
+        if (this.tickCount % 60 === 0)
+          audio.playBeep(880 + Math.random() * 400, 0.05);
       } else {
         audio.setAmbienceIntensity(0);
       }
@@ -106,22 +127,32 @@ export class SimulationController {
     if (this.snapshot) {
       this.renderer.render(this.snapshot, this.agents, history);
     } else {
-      this.renderer.renderIdle(this.agents, this.tickCount, this.scanning, history);
+      this.renderer.renderIdle(
+        this.agents,
+        this.tickCount,
+        this.scanning,
+        history,
+      );
     }
 
     this.animFrameId = requestAnimationFrame(this.loop);
   };
 
-  private getHistoryScores(): number[] { return getHistory().map(h => h.snapshot.metrics.performanceScore); }
+  private getHistoryScores(): number[] {
+    return getHistory().map((h) => h.snapshot.metrics.performanceScore);
+  }
 
   async runScan(url: string): Promise<SystemSnapshot> {
-    if (this.scanning) throw new Error('Scan already in progress');
+    if (this.scanning) throw new Error("Scan already in progress");
     this.forcedScore = null;
-    if (!this.audioStarted) { audio.startAmbience(); this.audioStarted = true; }
-    this.scanning = true; 
+    if (!this.audioStarted) {
+      audio.startAmbience();
+      this.audioStarted = true;
+    }
+    this.scanning = true;
     $isScanning.set(true);
     this.scanStartTime = performance.now();
-    
+
     try {
       const metrics = await fetchMetrics(url);
       this.snapshot = interpret(metrics);
@@ -139,6 +170,11 @@ export class SimulationController {
     }
   }
 
-  getSnapshot() { return this.snapshot; }
-  destroy() { this.running = false; if (this.animFrameId) cancelAnimationFrame(this.animFrameId); }
+  getSnapshot() {
+    return this.snapshot;
+  }
+  destroy() {
+    this.running = false;
+    if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+  }
 }

@@ -11,7 +11,7 @@ import {
   type HistoryEntry,
   SystemState,
   DEFAULT_THRESHOLDS,
-} from '../core/types';
+} from "../core/types";
 
 let previousState: SystemState | null = null;
 let consecutiveLowCount = 0;
@@ -20,7 +20,10 @@ let history: HistoryEntry[] = [];
 /**
  * Compute instability factor (0–1) from CLS and TBT.
  */
-function computeInstability(metrics: LighthouseMetrics, config: ThresholdConfig): number {
+function computeInstability(
+  metrics: LighthouseMetrics,
+  config: ThresholdConfig,
+): number {
   const clsFactor = Math.min(metrics.cls / (config.clsWarning * 3), 1);
   const tbtFactor = Math.min(metrics.tbt / (config.tbtWarning * 3), 1);
   return Math.min((clsFactor + tbtFactor) / 2 + (clsFactor > 0.5 ? 0.2 : 0), 1);
@@ -97,9 +100,9 @@ function generateEvents(
     events.push({
       id: `evt-${now}-lcp`,
       message: `Latency spike detected — LCP ${(metrics.lcp / 1000).toFixed(1)}s`,
-      severity: metrics.lcp > 6000 ? 'critical' : 'warning',
+      severity: metrics.lcp > 6000 ? "critical" : "warning",
       timestamp: now,
-      metric: 'LCP',
+      metric: "LCP",
     });
   }
 
@@ -107,9 +110,9 @@ function generateEvents(
     events.push({
       id: `evt-${now}-cls`,
       message: `Layout shift instability — CLS ${metrics.cls.toFixed(3)}`,
-      severity: metrics.cls > 0.25 ? 'critical' : 'warning',
+      severity: metrics.cls > 0.25 ? "critical" : "warning",
       timestamp: now,
-      metric: 'CLS',
+      metric: "CLS",
     });
   }
 
@@ -117,9 +120,9 @@ function generateEvents(
     events.push({
       id: `evt-${now}-tbt`,
       message: `Thread blocking detected — TBT ${metrics.tbt.toFixed(0)}ms`,
-      severity: metrics.tbt > 600 ? 'critical' : 'warning',
+      severity: metrics.tbt > 600 ? "critical" : "warning",
       timestamp: now,
-      metric: 'TBT',
+      metric: "TBT",
     });
   }
 
@@ -127,17 +130,17 @@ function generateEvents(
     events.push({
       id: `evt-${now}-fcp`,
       message: `Slow first paint — FCP ${(metrics.fcp / 1000).toFixed(1)}s`,
-      severity: 'warning',
+      severity: "warning",
       timestamp: now,
-      metric: 'FCP',
+      metric: "FCP",
     });
   }
 
   if (state === SystemState.FIRE) {
     events.push({
       id: `evt-${now}-fire`,
-      message: 'Critical failure in node cluster — all hands on deck!',
-      severity: 'critical',
+      message: "Critical failure in node cluster — all hands on deck!",
+      severity: "critical",
       timestamp: now,
     });
   }
@@ -145,8 +148,8 @@ function generateEvents(
   if (state === SystemState.STABLE && metrics.performanceScore >= 95) {
     events.push({
       id: `evt-${now}-perf`,
-      message: 'All systems nominal — performance excellent',
-      severity: 'info',
+      message: "All systems nominal — performance excellent",
+      severity: "info",
       timestamp: now,
     });
   }

@@ -3,7 +3,7 @@
 // Maintains an event history log
 // ============================================================
 
-import type { SystemEvent, SystemSnapshot } from '../core/types';
+import type { SystemEvent, SystemSnapshot } from "../core/types";
 
 const MAX_EVENTS = 50;
 let eventLog: SystemEvent[] = [];

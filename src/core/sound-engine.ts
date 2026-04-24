@@ -2,7 +2,7 @@
 // Sound Effects — Web Audio API procedural sounds
 // ============================================================
 
-import { SystemState } from '../core/types';
+import { SystemState } from "../core/types";
 
 class SoundEngine {
   private ctx: AudioContext | null = null;
@@ -26,7 +26,9 @@ class SoundEngine {
     return this.enabled;
   }
 
-  isEnabled() { return this.enabled; }
+  isEnabled() {
+    return this.enabled;
+  }
 
   updateState(state: SystemState) {
     if (!this.enabled || !this.ctx) return;
@@ -52,7 +54,7 @@ class SoundEngine {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.connect(gain).connect(this.ctx.destination);
-    osc.type = 'square';
+    osc.type = "square";
     osc.frequency.setValueAtTime(880, this.ctx.currentTime);
     osc.frequency.setValueAtTime(440, this.ctx.currentTime + 0.15);
     osc.frequency.setValueAtTime(880, this.ctx.currentTime + 0.3);
@@ -67,7 +69,7 @@ class SoundEngine {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.connect(gain).connect(this.ctx.destination);
-    osc.type = 'triangle';
+    osc.type = "triangle";
     osc.frequency.setValueAtTime(660, this.ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(330, this.ctx.currentTime + 0.3);
     gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
@@ -81,7 +83,7 @@ class SoundEngine {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.connect(gain).connect(this.ctx.destination);
-    osc.type = 'sine';
+    osc.type = "sine";
     osc.frequency.setValueAtTime(440, this.ctx.currentTime);
     osc.frequency.setValueAtTime(554, this.ctx.currentTime + 0.15);
     osc.frequency.setValueAtTime(660, this.ctx.currentTime + 0.3);
@@ -102,9 +104,11 @@ class SoundEngine {
     this.ambientOsc = this.ctx.createOscillator();
     this.ambientGain = this.ctx.createGain();
     this.ambientOsc.connect(this.ambientGain).connect(this.ctx.destination);
-    this.ambientOsc.type = 'sawtooth';
-    this.ambientOsc.frequency.value = this.currentState === SystemState.FIRE ? 55 : 40;
-    this.ambientGain.gain.value = this.currentState === SystemState.FIRE ? 0.015 : 0.008;
+    this.ambientOsc.type = "sawtooth";
+    this.ambientOsc.frequency.value =
+      this.currentState === SystemState.FIRE ? 55 : 40;
+    this.ambientGain.gain.value =
+      this.currentState === SystemState.FIRE ? 0.015 : 0.008;
     this.ambientOsc.start();
   }
 
