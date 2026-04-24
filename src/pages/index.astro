@@ -1,0 +1,204 @@
+---
+// Pixel Insights — Dynamic Console Feedback
+import '../styles/global.css';
+---
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lighthouse Pixel - Performance Site Telemetry</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='8' y='4' width='16' height='24' fill='%231a1b26' stroke='%2324283b' stroke-width='2'/><rect x='10' y='8' width='12' height='2' fill='%230f111a'/><circle cx='12' cy='9' r='1' fill='%239ece6a'/><rect x='10' y='14' width='12' height='2' fill='%230f111a'/><circle cx='18' cy='15' r='1' fill='%23f7768e'/><rect x='10' y='20' width='12' height='2' fill='%230f111a'/><circle cx='15' cy='21' r='1' fill='%237aa2f7'/></svg>" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <div id="preloader">
+    <div class="preloader-rack">
+      <div class="rack-unit"><div class="led green active"></div><div class="led green"></div><div class="led"></div></div>
+      <div class="rack-unit"><div class="led"></div><div class="led green active"></div><div class="led"></div></div>
+      <div class="rack-unit"><div class="led green"></div><div class="led"></div><div class="led green active"></div></div>
+    </div>
+  </div>
+
+  <div class="crt-overlay"></div>
+
+  <div class="switch-container">
+    <label class="switch">
+      <input type="checkbox" id="check-night">
+      <span class="slider">
+        <span class="switch-icon sun"><i class="fas fa-sun"></i></span>
+        <span class="switch-icon moon"><i class="fas fa-moon"></i></span>
+      </span>
+    </label>
+  </div>
+
+  <div class="app-container">
+    <div class="simulation-view">
+      <canvas id="simulation-canvas"></canvas>
+      
+      <!-- Floating Telemetry HUD -->
+      <div class="metrics-hud hidden" id="metrics-hud">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
+          <span style="font-family:'Press Start 2P'; font-size:8px; color:var(--accent-cyan); letter-spacing:1px;">PERFORMANCE METRICS</span>
+          <span id="score-val" style="font-family:'Press Start 2P'; font-size:24px; color:var(--accent-cyan);">--</span>
+        </div>
+        
+        <div class="hud-row">
+          <div class="hud-label"><span>LCP</span> <span id="val-lcp">--</span></div>
+          <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-lcp" style="background:var(--accent-red);"></div></div>
+        </div>
+        <div class="hud-row">
+          <div class="hud-label"><span>FCP</span> <span id="val-fcp">--</span></div>
+          <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-fcp" style="background:var(--accent-blue);"></div></div>
+        </div>
+        <div class="hud-row">
+          <div class="hud-label"><span>TBT</span> <span id="val-tbt">--</span></div>
+          <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-tbt" style="background:var(--accent-yellow);"></div></div>
+        </div>
+        <div class="hud-row">
+          <div class="hud-label"><span>CLS</span> <span id="val-cls">--</span></div>
+          <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-cls" style="background:var(--accent-green);"></div></div>
+        </div>
+      </div>
+      
+      <!-- Bottom-Left Simulator Widget (Toggleable) -->
+      <button class="btn-toggle-sim" id="btn-toggle-sim" title="Toggle Scenario Simulator">
+        <i class="fas fa-server"></i>
+      </button>
+      
+      <div class="floating-simulator hidden" id="floating-simulator">
+        <div style="font-family:'Press Start 2P'; font-size:8px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; min-width:120px;">
+          <span>SIMULATOR</span>
+          <span id="slider-val" style="font-size:12px; color:var(--accent-cyan);">100</span>
+        </div>
+        <input type="range" min="0" max="100" value="100" class="hud-slider" id="score-slider" style="flex:1;" />
+      </div>
+    </div>
+
+    <!-- Bottom Console -->
+    <div class="bottom-console">
+      <div class="console-progress-track">
+        <div class="console-progress-fill" id="console-progress-fill"></div>
+      </div>
+      <div class="console-main">
+        <div class="console-input-group">
+          <span class="terminal-prompt">></span>
+          <input type="url" id="url-input" class="url-input" placeholder="Enter URL to analyze performance..." value="https://" autofocus />
+        </div>
+        <button id="btn-run" class="btn-audit" title="RUN PERFORMANCE AUDIT">
+          <i class="fas fa-bolt"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { SimulationController } from '../core/simulation';
+
+    const canvas = document.getElementById('simulation-canvas') as HTMLCanvasElement;
+    const urlInput = document.getElementById('url-input') as HTMLInputElement;
+    const btnRun = document.getElementById('btn-run')!;
+    const metricsHud = document.getElementById('metrics-hud')!;
+    const scoreVal = document.getElementById('score-val')!;
+    const checkNight = document.getElementById('check-night') as HTMLInputElement;
+    const progressFill = document.getElementById('console-progress-fill')!;
+    const scoreSlider = document.getElementById('score-slider') as HTMLInputElement;
+    const sliderVal = document.getElementById('slider-val')!;
+
+    const barLcp = document.getElementById('bar-lcp')!;
+    const barFcp = document.getElementById('bar-fcp')!;
+    const barTbt = document.getElementById('bar-tbt')!;
+    const barCls = document.getElementById('bar-cls')!;
+    const valLcp = document.getElementById('val-lcp')!;
+    const valFcp = document.getElementById('val-fcp')!;
+    const valTbt = document.getElementById('val-tbt')!;
+    const valCls = document.getElementById('val-cls')!;
+
+    const sim = new SimulationController();
+
+    window.addEventListener('load', () => {
+      urlInput.focus();
+      urlInput.selectionStart = urlInput.selectionEnd = urlInput.value.length;
+    });
+
+    sim.onSnapshotUpdate = (snap) => {
+      const score = Math.round(snap.metrics.performanceScore);
+      scoreVal.textContent = String(score);
+      scoreVal.style.color = score >= 90 ? 'var(--accent-cyan)' : (score >= 60 ? 'var(--accent-green)' : (score >= 30 ? 'var(--accent-yellow)' : 'var(--accent-red)'));
+      
+      if (snap.metrics.lcp !== undefined) {
+        updateBar(barLcp, valLcp, score);
+        updateBar(barFcp, valFcp, Math.min(100, score * 1.1));
+        updateBar(barTbt, valTbt, Math.min(100, score * 0.9));
+        updateBar(barCls, valCls, Math.min(100, score * 1.05));
+      }
+    };
+
+    function updateBar(bar: HTMLElement, val: HTMLElement, p: number) {
+      const valP = Math.round(Math.min(100, Math.max(0, p)));
+      bar.style.width = valP + '%';
+      val.textContent = valP + '%';
+    }
+
+    sim.init(canvas);
+
+    btnRun.addEventListener('click', async () => {
+      const url = urlInput.value.trim();
+      if (!url) return;
+      
+      btnRun.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      
+      let progress = 0;
+      const iv = setInterval(() => {
+        progress += 1.5;
+        if (progress > 95) progress = 95;
+        progressFill.style.width = progress + '%';
+      }, 100);
+
+      try {
+        await sim.runScan(url);
+        clearInterval(iv);
+        progressFill.style.width = '100%';
+        scoreSlider.value = String(sim.getSnapshot()!.metrics.performanceScore);
+        sliderVal.textContent = scoreSlider.value;
+        metricsHud.classList.remove('hidden');
+        setTimeout(() => { progressFill.style.width = '0%'; }, 2000);
+      } catch (e) {
+        clearInterval(iv);
+        progressFill.style.backgroundColor = 'var(--accent-red)';
+      } finally {
+        btnRun.innerHTML = '<i class="fas fa-bolt"></i>';
+      }
+    });
+
+    urlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') btnRun.click(); });
+    checkNight.addEventListener('change', () => { sim.toggleNightMode(checkNight.checked); });
+    
+    // Simulator Toggle
+    const btnToggleSim = document.getElementById('btn-toggle-sim')!;
+    const floatingSimulator = document.getElementById('floating-simulator')!;
+    btnToggleSim.addEventListener('click', () => {
+      floatingSimulator.classList.toggle('hidden');
+      btnToggleSim.style.color = floatingSimulator.classList.contains('hidden') ? 'var(--text-muted)' : 'var(--accent-cyan)';
+    });
+
+    scoreSlider.addEventListener('input', () => {
+      const val = parseInt(scoreSlider.value);
+      sliderVal.textContent = String(val);
+      sim.forceScore(val);
+    });
+
+    // Preloader
+    const preloader = document.getElementById('preloader')!;
+    let p = 0; const start = Date.now();
+    const ivPre = setInterval(() => {
+      p++;
+      if (p >= 100 && (Date.now() - start) >= 3000) {
+        clearInterval(ivPre);
+        preloader.style.opacity = '0';
+        setTimeout(() => preloader.style.display = 'none', 500);
+      }
+    }, 30);
+  </script>
+</body>
+</html>
