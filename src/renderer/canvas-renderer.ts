@@ -14,17 +14,21 @@ import {
   drawTileBase,
   drawTileTop,
   drawTileLights,
+} from "./tile-sprites";
+import {
   drawAgentBody,
   drawAgentDialogue,
   drawAgentMood,
+} from "./agent-sprites";
+import {
   drawSmoke,
   drawFire,
   drawTrendGraph,
   drawMetricHighlight,
   drawLCPWeight,
   applyCLSJitter,
-  TILE_SIZE,
-} from "./sprites";
+} from "./ui-sprites";
+import { TILE_SIZE } from "./render-constants";
 import { $hoveredMetric, $selectedMetric } from "../store/systemStore";
 
 export class CanvasRenderer {
@@ -85,7 +89,7 @@ export class CanvasRenderer {
       // 2. Agents in this row
       const agentsInRow = agents.filter(a => Math.floor(a.y) === row);
       for (const agent of agentsInRow) {
-        (agent as any).metadata = { tbtScore: snapshot.metrics.performanceScore };
+        agent.metadata = { ...agent.metadata, tbtScore: snapshot.metrics.performanceScore };
         drawAgentBody(ctx, agent, state, this.tick);
       }
 

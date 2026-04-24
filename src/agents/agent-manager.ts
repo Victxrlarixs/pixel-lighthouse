@@ -130,8 +130,8 @@ function makeAgent(id: string, role: AgentRole, x: number, y: number, physical: 
     animationFrame: 0, direction: "up", speed: 1.0, dialogueTimer: 0,
     isSitting: true, skinColor: physical.skin, hairColor: physical.hair,
     bodyType: physical.body, isWoman: physical.isWoman,
-    metadata: { taskTimer: 0, subState: 'resting' }
-  } as any;
+    metadata: { taskTimer: 0, subState: "resting" },
+  };
 }
 
 const LIGHTHOUSE_STEPS = [
