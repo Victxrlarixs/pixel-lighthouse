@@ -1,0 +1,29 @@
+---
+// TelemetryHUD.astro — Real-time metrics display (RESTORING ORIGINAL UI)
+---
+<div class="metrics-hud hidden" id="metrics-hud">
+  <div class="hud-header">
+    <div class="hud-title">PERFORMANCE METRICS</div>
+    <div class="score-main" id="score-val">--</div>
+  </div>
+
+  <div class="hud-row">
+    <div class="hud-label"><span>LCP</span><span id="val-lcp">--</span></div>
+    <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-lcp" style="background:var(--accent-red);"></div></div>
+  </div>
+
+  <div class="hud-row">
+    <div class="hud-label"><span>FCP</span><span id="val-fcp">--</span></div>
+    <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-fcp" style="background:var(--accent-yellow);"></div></div>
+  </div>
+
+  <div class="hud-row">
+    <div class="hud-label"><span>TBT</span><span id="val-tbt">--</span></div>
+    <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-tbt" style="background:var(--accent-blue);"></div></div>
+  </div>
+
+  <div class="hud-row">
+    <div class="hud-label"><span>CLS</span><span id="val-cls">--</span></div>
+    <div class="hud-bar-bg"><div class="hud-bar-fill" id="bar-cls" style="background:var(--accent-green);"></div></div>
+  </div>
+</div>
