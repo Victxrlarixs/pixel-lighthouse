@@ -24,7 +24,7 @@ export enum TileType {
   LAPTOP = 18,
   SLIDING_DOOR = 19,
   SERVER_LARGE = 20,
-  SOFA = 21,
+  COFFEE_MACHINE = 21,
 }
 
 export enum SystemState {
@@ -51,6 +51,8 @@ export enum AgentState {
   FIREFIGHTING = "FIREFIGHTING",
   SCANNING = "SCANNING",
   MOVING = "MOVING",
+  COFFEE_BREAK = "COFFEE_BREAK",
+  RESTING = "RESTING",
 }
 
 export interface AgentMetadata {

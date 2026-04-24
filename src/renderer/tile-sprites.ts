@@ -87,6 +87,14 @@ export function drawTileBase(
       ctx.fillStyle = "#795548";
       ctx.fillRect(px + 14, py + 28, 20, 14);
       break;
+    case TileType.COFFEE_MACHINE:
+      ctx.fillStyle = "#37474f";
+      ctx.fillRect(px + 8, py + 12, TILE_SIZE - 16, TILE_SIZE - 12);
+      ctx.fillStyle = "#cfd8dc";
+      ctx.fillRect(px + 12, py + 16, TILE_SIZE - 24, 10);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(px + 20, py + 34, 8, 6); // Cup
+      break;
   }
 }
 
@@ -151,15 +159,6 @@ export function drawTileTop(
       ctx.fillRect(px, py + TILE_SIZE - 8, TILE_SIZE, 8);
       ctx.strokeStyle = c.wallLight;
       ctx.strokeRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-      break;
-    case TileType.SOFA:
-      ctx.fillStyle = "#455a64";
-      ctx.fillRect(px + 2, py + 10, TILE_SIZE - 4, TILE_SIZE - 14);
-      ctx.fillStyle = "#607d8b";
-      ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, 12);
-      ctx.fillStyle = "#37474f";
-      ctx.fillRect(px + 2, py + 14, 6, 20);
-      ctx.fillRect(px + TILE_SIZE - 8, py + 14, 6, 20);
       break;
   }
 }

@@ -37,6 +37,8 @@ export class CanvasRenderer {
   private scale = 1.1;
   public isNightMode = false;
   public isFeverMode = false;
+  private mapBuffer: HTMLCanvasElement | null = null;
+  private lastBufferState: SystemState | null = null;
 
   /**
    * Initializes the renderer with a canvas element.
@@ -67,6 +69,29 @@ export class CanvasRenderer {
   }
 
   /**
+   * Pre-renders the static map into a buffer.
+   * @param state - The system state for floor/wall colors.
+   */
+  private preRenderMap(state: SystemState) {
+    if (!this.mapBuffer) {
+      this.mapBuffer = document.createElement("canvas");
+      this.mapBuffer.width = MAP_COLS * TILE_SIZE;
+      this.mapBuffer.height = MAP_ROWS * TILE_SIZE;
+    }
+    const mCtx = this.mapBuffer.getContext("2d")!;
+    mCtx.clearRect(0, 0, this.mapBuffer.width, this.mapBuffer.height);
+
+    for (let row = 0; row < MAP_ROWS; row++) {
+      for (let col = 0; col < MAP_COLS; col++) {
+        drawFloor(mCtx, DATA_CENTER_MAP[row][col], col, row, state);
+        drawTileBase(mCtx, DATA_CENTER_MAP[row][col], col, row, state, [], 0, false);
+        drawTileTop(mCtx, DATA_CENTER_MAP[row][col], col, row, state, 0, false);
+      }
+    }
+    this.lastBufferState = state;
+  }
+
+  /**
    * Main render loop for active simulation.
    * @param snapshot - Current system snapshot data.
    * @param agents - List of active agents.
@@ -81,10 +106,18 @@ export class CanvasRenderer {
     const selected = $selectedMetric.get();
     const hovered = $hoveredMetric.get();
 
+    if (this.lastBufferState !== state) {
+      this.preRenderMap(state);
+    }
+
     ctx.save();
     if (state === SystemState.FIRE)
       ctx.translate(Math.random() * 4 - 2, Math.random() * 4 - 2);
     ctx.scale(this.scale, this.scale);
+
+    if (this.mapBuffer) {
+      ctx.drawImage(this.mapBuffer, 0, 0);
+    }
 
     ctx.save();
     if (selected === "CLS" || hovered === "CLS")
@@ -92,11 +125,6 @@ export class CanvasRenderer {
     else if (clsScore < 90) applyCLSJitter(ctx, clsScore, this.tick);
 
     for (let row = 0; row < MAP_ROWS; row++) {
-      for (let col = 0; col < MAP_COLS; col++) {
-        drawFloor(ctx, DATA_CENTER_MAP[row][col], col, row, state);
-        drawTileBase(ctx, DATA_CENTER_MAP[row][col], col, row, state, agents, this.tick, this.isNightMode);
-      }
-
       if (row === 4 && (lcpScore < 85 || selected === "LCP" || hovered === "LCP")) {
         drawLCPWeight(ctx, 5, 4, lcpScore, this.tick);
       }
@@ -108,7 +136,6 @@ export class CanvasRenderer {
       }
 
       for (let col = 0; col < MAP_COLS; col++) {
-        drawTileTop(ctx, DATA_CENTER_MAP[row][col], col, row, state, this.tick, this.isNightMode);
         drawTileLights(ctx, DATA_CENTER_MAP[row][col], col, row, state, this.tick, this.isNightMode);
       }
     }
@@ -173,23 +200,15 @@ export class CanvasRenderer {
     this.tick = tick;
     const { ctx } = this;
     const state = SystemState.STABLE;
+    if (this.lastBufferState !== state) {
+      this.preRenderMap(state);
+    }
+
     ctx.save();
     ctx.scale(this.scale, this.scale);
 
-    for (let row = 0; row < MAP_ROWS; row++) {
-      for (let col = 0; col < MAP_COLS; col++) {
-        drawFloor(ctx, DATA_CENTER_MAP[row][col], col, row, state);
-        drawTileBase(
-          ctx,
-          DATA_CENTER_MAP[row][col],
-          col,
-          row,
-          state,
-          agents,
-          this.tick,
-          this.isNightMode,
-        );
-      }
+    if (this.mapBuffer) {
+      ctx.drawImage(this.mapBuffer, 0, 0);
     }
 
     const sorted = [...agents].sort((a, b) => a.y - b.y);
@@ -199,15 +218,6 @@ export class CanvasRenderer {
 
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
-        drawTileTop(
-          ctx,
-          DATA_CENTER_MAP[row][col],
-          col,
-          row,
-          state,
-          this.tick,
-          this.isNightMode,
-        );
         drawTileLights(
           ctx,
           DATA_CENTER_MAP[row][col],
