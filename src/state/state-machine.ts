@@ -21,7 +21,6 @@ export function interpret(metrics: PerformanceMetrics): SystemSnapshot {
   const snapshot: SystemSnapshot = {
     metrics,
     state,
-    activeEvents: [],
   };
 
   history.push({ snapshot });

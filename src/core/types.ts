@@ -17,8 +17,6 @@ export enum TileType {
   DESK = 11,
   CHAIR = 12,
   PLANT = 13,
-  CARPET = 14,
-  CABLE_V = 15,
   CABLE_H = 16,
   MONITOR = 17,
   LAPTOP = 18,
@@ -46,35 +44,27 @@ export enum AgentRole {
 export enum AgentState {
   IDLE = "IDLE",
   WORKING = "WORKING",
-  ALERT = "ALERT",
   RUNNING = "RUNNING",
-  FIREFIGHTING = "FIREFIGHTING",
   SCANNING = "SCANNING",
-  MOVING = "MOVING",
   COFFEE_BREAK = "COFFEE_BREAK",
-  RESTING = "RESTING",
 }
 
 export interface AgentMetadata {
   mood?: "chaos" | "fire" | "happy" | "working" | "coffee" | null;
   taskTimer: number;
-  subState?: string;
   tbtScore?: number;
-  wasScanning?: boolean;
 }
 
 export interface Agent {
   id: string;
   role: AgentRole;
   state: AgentState;
-  currentTask: string;
   x: number;
   y: number;
   targetX: number;
   targetY: number;
   animationFrame: number;
   direction: "down" | "up" | "left" | "right";
-  speed: number;
   dialogue?: string;
   dialogueTimer: number;
   isSitting: boolean;
@@ -84,18 +74,7 @@ export interface Agent {
   hairColor: string;
   bodyType: "slim" | "normal" | "large";
   isWoman: boolean;
-  bio?: string;
-  skills?: string[];
   metadata: AgentMetadata;
-}
-
-export interface SystemEvent {
-  id: string;
-  timestamp: number;
-  type: string;
-  severity: "info" | "warning" | "critical";
-  message: string;
-  category: string;
 }
 
 export interface PerformanceMetrics {
@@ -111,5 +90,4 @@ export interface PerformanceMetrics {
 export interface SystemSnapshot {
   metrics: PerformanceMetrics;
   state: SystemState;
-  activeEvents: SystemEvent[];
 }

@@ -2,11 +2,8 @@ import {
   type SystemSnapshot,
   type Agent,
   SystemState,
-  AgentRole,
-  AgentState,
 } from "../core/types";
 import { interpret, getHistory } from "../state/state-machine";
-import { processSnapshot, getEventLog } from "../core/event-engine";
 import {
   createAgents,
   updateAgents,
@@ -40,9 +37,6 @@ export class SimulationController {
   private audioStarted = false;
   private forcedScore: number | null = null;
 
-  public onSnapshotUpdate?: (snapshot: SystemSnapshot) => void;
-  public onEventsUpdate?: (events: any[]) => void;
-
   constructor() {
     this.agents = createAgents();
   }
@@ -68,7 +62,6 @@ export class SimulationController {
       this.audioStarted = true;
     }
     this.forcedScore = score;
-
     this.snapshot = interpret({
       performanceScore: score,
       fcp: 200 + (100 - score) * 50,
@@ -78,7 +71,6 @@ export class SimulationController {
       timestamp: Date.now(),
       url: "scenario-simulator",
     });
-
     $performanceScore.set(score);
     $systemSnapshot.set(this.snapshot);
     if (this.tickCount % 20 === 0) audio.playBeep(440 + score * 5, 0.05);
@@ -105,29 +97,31 @@ export class SimulationController {
     const currentScore =
       this.forcedScore !== null
         ? this.forcedScore
-        : this.snapshot
-          ? this.snapshot.metrics.performanceScore
-          : 0;
-    const isFever = currentScore >= 90;
-    this.renderer.setFeverMode(isFever);
+        : this.snapshot?.metrics.performanceScore ?? 0;
+
+    this.renderer.setFeverMode(currentScore >= 90);
 
     const scanElapsed = this.scanning
       ? (performance.now() - this.scanStartTime) / 1000
       : 0;
-    const isChaos = this.snapshot?.state === SystemState.CHAOS || this.snapshot?.state === SystemState.FIRE;
+    const isChaos =
+      this.snapshot?.state === SystemState.CHAOS ||
+      this.snapshot?.state === SystemState.FIRE;
+
     updateAgents(this.agents, this.snapshot, this.scanning, scanElapsed);
     tickAgents(this.agents, dt, isChaos);
 
-    const history = this.getHistoryScores();
+    const history = getHistory().map((h) => h.snapshot.metrics.performanceScore);
     $history.set(history);
     $agents.set([...this.agents]);
 
     if (this.audioStarted) {
-      if (this.scanning) audio.setAmbienceIntensity(0.5);
-      else if (this.snapshot?.state === SystemState.FIRE) {
+      if (this.scanning) {
+        audio.setAmbienceIntensity(0.5);
+      } else if (this.snapshot?.state === SystemState.FIRE) {
         audio.setAmbienceIntensity(1.0);
         if (this.tickCount % 120 === 0) audio.playAlarm();
-      } else if (isFever) {
+      } else if (currentScore >= 90) {
         audio.setAmbienceIntensity(0.2);
         if (this.tickCount % 60 === 0)
           audio.playBeep(880 + Math.random() * 400, 0.05);
@@ -139,20 +133,11 @@ export class SimulationController {
     if (this.snapshot) {
       this.renderer.render(this.snapshot, this.agents, history);
     } else {
-      this.renderer.renderIdle(
-        this.agents,
-        this.tickCount,
-        this.scanning,
-        history,
-      );
+      this.renderer.renderIdle(this.agents, this.tickCount, this.scanning, history);
     }
 
     this.animFrameId = requestAnimationFrame(this.loop);
   };
-
-  private getHistoryScores(): number[] {
-    return getHistory().map((h) => h.snapshot.metrics.performanceScore);
-  }
 
   /**
    * Triggers a live Lighthouse audit scan.
@@ -161,20 +146,22 @@ export class SimulationController {
    */
   async runScan(url: string): Promise<SystemSnapshot> {
     if (this.scanning) throw new Error("Scan already in progress");
-    
+
     this.snapshot = null;
     this.forcedScore = null;
     $systemSnapshot.set(null);
-    $performanceScore.set(0); 
+    $performanceScore.set(0);
+
     if (!this.audioStarted) {
       audio.startAmbience();
       this.audioStarted = true;
     }
+
     this.scanning = true;
     $isScanning.set(true);
     this.scanStartTime = performance.now();
-    
-    this.agents.forEach(a => {
+
+    this.agents.forEach((a) => {
       a.dialogue = undefined;
       a.dialogueTimer = 0;
     });
@@ -182,7 +169,6 @@ export class SimulationController {
     try {
       const metrics = await fetchMetrics(url);
       this.snapshot = interpret(metrics);
-      processSnapshot(this.snapshot);
       this.scanning = false;
       $isScanning.set(false);
       $systemSnapshot.set(this.snapshot);
@@ -191,10 +177,9 @@ export class SimulationController {
     } catch (error: any) {
       this.scanning = false;
       $isScanning.set(false);
-      
       if (error.message === "INVALID_URL") {
         this.forceScore(0);
-        this.agents.forEach(a => {
+        this.agents.forEach((a) => {
           a.dialogue = "INVALID URL TARGET!";
           a.dialogueTimer = 4;
         });

@@ -1,9 +1,6 @@
 import { SimulationController } from "../core/simulation";
 import {
-  $performanceScore,
   $systemSnapshot,
-  $isNightMode,
-  $isScanning,
   $hoveredMetric,
   $selectedMetric,
 } from "../store/systemStore";

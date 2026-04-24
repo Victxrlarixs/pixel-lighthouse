@@ -21,10 +21,7 @@ export function drawFloor(
   const c = STATE_COLORS[state];
   ctx.fillStyle = (x + y) % 2 === 0 ? c.floor1 : c.floor2;
   ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-  if (tile === TileType.CARPET) {
-    ctx.fillStyle = "#b0bec5";
-    ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-  } else if (tile === TileType.CABLE_H) {
+  if (tile === TileType.CABLE_H) {
     ctx.fillStyle = "#263238";
     ctx.fillRect(px, py + 16, TILE_SIZE, 16);
     ctx.fillStyle = "#03a9f4";
@@ -48,9 +45,9 @@ export function drawTileBase(
   tile: TileType,
   x: number,
   y: number,
-  state: SystemState,
-  agents: Agent[],
-  tick: number,
+  _state: SystemState,
+  _agents: Agent[],
+  _tick: number,
   isNight = false,
 ) {
   const px = x * TILE_SIZE;
@@ -114,8 +111,8 @@ export function drawTileTop(
   x: number,
   y: number,
   state: SystemState,
-  tick: number,
-  isNight = false,
+  _tick: number,
+  _isNight = false,
 ) {
   const px = x * TILE_SIZE;
   const py = y * TILE_SIZE;

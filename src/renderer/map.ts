@@ -1,5 +1,3 @@
-import { TileType } from "../core/types";
-
 export const MAP_COLS = 17;
 export const MAP_ROWS = 13;
 

@@ -40,7 +40,7 @@ export function drawCat(
 export function drawAgentBody(
   ctx: CanvasRenderingContext2D,
   agent: Agent,
-  state: SystemState,
+  _state: SystemState,
   _tick: number,
 ) {
   if (agent.id === "easter-cat") {

@@ -102,7 +102,6 @@ export class CanvasRenderer {
     const { ctx } = this;
     const { state } = snapshot;
     const lcpScore = snapshot.metrics.performanceScore;
-    const clsScore = 100;
     const selected = $selectedMetric.get();
     const hovered = $hoveredMetric.get();
 
@@ -122,7 +121,6 @@ export class CanvasRenderer {
     ctx.save();
     if (selected === "CLS" || hovered === "CLS")
       applyCLSJitter(ctx, 40, this.tick);
-    else if (clsScore < 90) applyCLSJitter(ctx, clsScore, this.tick);
 
     for (let row = 0; row < MAP_ROWS; row++) {
       if (row === 4 && (lcpScore < 85 || selected === "LCP" || hovered === "LCP")) {

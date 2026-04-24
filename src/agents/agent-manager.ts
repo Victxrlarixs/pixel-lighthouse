@@ -42,7 +42,7 @@ export function isWalkable(x: number, y: number): boolean {
   const ty = Math.floor(y);
   if (tx < 0 || tx >= MAP_COLS || ty < 0 || ty >= MAP_ROWS) return false;
   const tile = DATA_CENTER_MAP[ty][tx];
-  return [TileType.FLOOR, TileType.CARPET, TileType.CABLE_H].includes(tile);
+  return [TileType.FLOOR, TileType.CABLE_H].includes(tile);
 }
 
 /**
@@ -62,9 +62,9 @@ export function createAgents(): Agent[] {
 
 function makeAgent(id: string, role: AgentRole, x: number, y: number, physical: any): Agent {
   return {
-    id, role, state: AgentState.IDLE, currentTask: "Idle",
+    id, role, state: AgentState.IDLE,
     x, y, targetX: x, targetY: y, homeX: x, homeY: y,
-    animationFrame: 0, direction: "up", speed: 1.0, dialogueTimer: 0,
+    animationFrame: 0, direction: "up", dialogueTimer: 0,
     isSitting: true, skinColor: physical.skin, hairColor: physical.hair,
     bodyType: physical.body, isWoman: physical.isWoman,
     metadata: { taskTimer: 0 },
