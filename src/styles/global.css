@@ -129,7 +129,7 @@ canvas {
   align-items: center;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 4px 12px;
+  padding: 4px 4px 4px 12px;
   border-radius: 4px;
 }
 
@@ -152,25 +152,36 @@ canvas {
 }
 
 .btn-audit {
-  background: var(--accent-blue);
-  color: #000;
-  border: none;
-  padding: 10px;
-  width: 40px;
-  height: 40px;
-  font-family: var(--font-pixel);
+  background: var(--bg-hover);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.5);
+  border-right: 2px solid rgba(0, 0, 0, 0.3);
+  padding: 8px 14px;
   font-size: 14px;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.1s, border-bottom-width 0.1s;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.btn-audit:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
+.btn-audit:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+  border-bottom-width: 4px;
+}
+
+.btn-audit:active:not(:disabled) {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+.btn-audit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .floating-simulator {

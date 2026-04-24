@@ -8,6 +8,7 @@ import {
   createAgents,
   updateAgents,
   tickAgents,
+  LIGHTHOUSE_STEPS,
 } from "../agents/agent-manager";
 import { fetchMetrics } from "../lighthouse/lighthouse-client";
 import { CanvasRenderer } from "../renderer/canvas-renderer";
@@ -18,6 +19,8 @@ import {
   $agents,
   $isNightMode,
   $isScanning,
+  $scanProgress,
+  $scanStep,
   $history,
 } from "../store/systemStore";
 
@@ -104,6 +107,13 @@ export class SimulationController {
     const scanElapsed = this.scanning
       ? (performance.now() - this.scanStartTime) / 1000
       : 0;
+      
+    if (this.scanning) {
+      const stepIndex = Math.min(Math.floor(scanElapsed / 1.5), LIGHTHOUSE_STEPS.length - 1);
+      const progress = Math.min(95, (scanElapsed / (LIGHTHOUSE_STEPS.length * 1.5)) * 100);
+      $scanStep.set(LIGHTHOUSE_STEPS[stepIndex]);
+      $scanProgress.set(progress);
+    }
     const isChaos =
       this.snapshot?.state === SystemState.CHAOS ||
       this.snapshot?.state === SystemState.FIRE;
@@ -159,6 +169,8 @@ export class SimulationController {
 
     this.scanning = true;
     $isScanning.set(true);
+    $scanProgress.set(0);
+    $scanStep.set("INITIALIZING...");
     this.scanStartTime = performance.now();
 
     this.agents.forEach((a) => {
@@ -171,8 +183,14 @@ export class SimulationController {
       this.snapshot = interpret(metrics);
       this.scanning = false;
       $isScanning.set(false);
+      $scanProgress.set(100);
+      $scanStep.set("AUDIT COMPLETE");
       $systemSnapshot.set(this.snapshot);
       $performanceScore.set(this.snapshot.metrics.performanceScore);
+      setTimeout(() => {
+        $scanProgress.set(0);
+        $scanStep.set("");
+      }, 2000);
       return this.snapshot;
     } catch (error: any) {
       this.scanning = false;
@@ -183,9 +201,15 @@ export class SimulationController {
           a.dialogue = "INVALID URL TARGET!";
           a.dialogueTimer = 4;
         });
+        $scanStep.set("ERROR: INVALID URL");
       } else {
         this.forceScore(Math.random() * 20 + 10);
+        $scanStep.set("ERROR: AUDIT FAILED");
       }
+      setTimeout(() => {
+        $scanProgress.set(0);
+        $scanStep.set("");
+      }, 2000);
       throw error;
     }
   }

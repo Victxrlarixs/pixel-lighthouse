@@ -15,6 +15,8 @@ export const $isNightMode = atom<boolean>(false);
 
 /** UI State: Active scanning status */
 export const $isScanning = atom<boolean>(false);
+export const $scanProgress = atom<number>(0);
+export const $scanStep = atom<string>("");
 
 /** UI State: Performance score history for graphing */
 export const $history = atom<number[]>([]);

@@ -166,7 +166,7 @@ import "../styles/global.css";
         </div>
         <div class="console-main">
           <div class="console-input-group">
-            <span class="terminal-prompt">></span>
+            <span class="terminal-prompt" id="terminal-prompt">></span>
             <input
               type="url"
               id="url-input"
@@ -175,10 +175,10 @@ import "../styles/global.css";
               value="https://"
               autofocus
             />
+            <button id="btn-run" class="btn-audit" title="RUN PERFORMANCE AUDIT">
+              <span style="font-size: 16px; font-weight: bold; margin-top: -2px;">&crarr;</span>
+            </button>
           </div>
-          <button id="btn-run" class="btn-audit" title="RUN PERFORMANCE AUDIT">
-            <i class="fas fa-bolt"></i>
-          </button>
         </div>
       </div>
     </div>

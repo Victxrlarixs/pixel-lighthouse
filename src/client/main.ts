@@ -3,6 +3,9 @@ import {
   $systemSnapshot,
   $hoveredMetric,
   $selectedMetric,
+  $scanProgress,
+  $scanStep,
+  $isScanning,
 } from "../store/systemStore";
 
 const canvas = document.getElementById("simulation-canvas") as HTMLCanvasElement;
@@ -34,15 +37,17 @@ btnRun.addEventListener("click", async () => {
 
   try {
     btnRun.disabled = true;
-    progressFill.style.width = "30%";
     await controller.runScan(url);
-    progressFill.style.width = "100%";
-    setTimeout(() => (progressFill.style.width = "0%"), 1000);
   } catch (err) {
     console.error(err);
-    progressFill.style.width = "0%";
   } finally {
     btnRun.disabled = false;
+  }
+});
+
+urlInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !btnRun.disabled) {
+    btnRun.click();
   }
 });
 
@@ -86,6 +91,19 @@ $systemSnapshot.subscribe((snapshot) => {
     updateHudBar("cls", snapshot.metrics.cls * 100, 25);
   } else {
     hud.classList.add("hidden");
+  }
+});
+
+$scanProgress.subscribe((progress) => {
+  progressFill.style.width = `${progress}%`;
+});
+
+const promptEl = document.getElementById("terminal-prompt") as HTMLSpanElement;
+$scanStep.subscribe((step) => {
+  if ($isScanning.get() && step) {
+    promptEl.textContent = step;
+  } else {
+    promptEl.textContent = ">";
   }
 });
 

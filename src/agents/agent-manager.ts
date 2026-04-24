@@ -71,7 +71,7 @@ function makeAgent(id: string, role: AgentRole, x: number, y: number, physical: 
   };
 }
 
-const LIGHTHOUSE_STEPS = [
+export const LIGHTHOUSE_STEPS = [
   "WARMING UP CHROME...", "NAVIGATING...", "MEASURING FCP...",
   "ANALYZING LCP...", "TRACING MAIN THREAD...", "CALCULATING CLS...",
   "ESTIMATING TBT...", "GENERATING JSON...", "COMPILING SCORE...",
