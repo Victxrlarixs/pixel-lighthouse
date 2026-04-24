@@ -15,6 +15,7 @@
     "@astrojs/node": "^10.0.6",
     "astro": "^6.1.9",
     "chrome-launcher": "^1.2.1",
-    "lighthouse": "^13.1.0"
+    "lighthouse": "^13.1.0",
+    "nanostores": "^1.3.0"
   }
 }

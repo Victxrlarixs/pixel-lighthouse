@@ -2,13 +2,21 @@
 // Simulation Controller — Easter Eggs & Demo Modes
 // ============================================================
 
-import { type SystemSnapshot, type Agent, type SystemEvent, SystemState, AgentRole, AgentState } from '../core/types';
+import { type SystemSnapshot, type Agent, SystemState, AgentRole, AgentState } from '../core/types';
 import { interpret, getHistory } from '../state/state-machine';
 import { processSnapshot, getEventLog } from '../core/event-engine';
 import { createAgents, updateAgents, tickAgents } from '../agents/agent-manager';
 import { fetchMetrics } from '../lighthouse/lighthouse-client';
 import { CanvasRenderer } from '../renderer/canvas-renderer';
 import { audio } from './audio';
+import { 
+  $performanceScore, 
+  $systemSnapshot, 
+  $agents, 
+  $isNightMode, 
+  $isScanning, 
+  $history 
+} from '../store/systemStore';
 
 export class SimulationController {
   private renderer!: CanvasRenderer;
@@ -22,13 +30,9 @@ export class SimulationController {
   private scanStartTime = 0;
   private audioStarted = false;
   private forcedScore: number | null = null;
-  private isDoomMode = false;
 
   public onSnapshotUpdate?: (snapshot: SystemSnapshot) => void;
-  public onEventsUpdate?: (events: SystemEvent[]) => void;
-  public onAgentsUpdate?: (events: Agent[]) => void;
-  public onScanStart?: () => void;
-  public onScanEnd?: () => void;
+  public onEventsUpdate?: (events: any[]) => void;
 
   constructor() {
     this.agents = createAgents();
@@ -43,7 +47,6 @@ export class SimulationController {
 
   forceScore(score: number) {
     if (!this.audioStarted) { audio.startAmbience(); this.audioStarted = true; }
-    this.isDoomMode = false;
     this.forcedScore = score;
     
     this.snapshot = interpret({
@@ -56,30 +59,14 @@ export class SimulationController {
       url: 'scenario-simulator'
     });
     
-    this.onSnapshotUpdate?.(this.snapshot);
+    $performanceScore.set(score);
+    $systemSnapshot.set(this.snapshot);
     if (this.tickCount % 20 === 0) audio.playBeep(440 + score * 5, 0.05);
-  }
-
-  triggerDoom() {
-    this.isDoomMode = true;
-    this.forceScore(0);
-    audio.playAlarm();
-  }
-
-  spawnCat() {
-    if (this.agents.find(a => a.id === 'easter-cat')) return;
-    const cat: Agent = {
-      id: 'easter-cat', role: AgentRole.SRE, state: AgentState.IDLE, currentTask: "Chasing bugs",
-      x: 15, y: 12, targetX: 1, targetY: 12, homeX: 15, homeY: 12,
-      animationFrame: 0, direction: 'left', speed: 2.0, dialogueTimer: 0, isSitting: false,
-      skinColor: '#000', hairColor: '#000', bodyType: 'slim', isWoman: false,
-      bio: "The office cat.", skills: ["Catching Mice", "Being Fluffy"]
-    };
-    this.agents.push(cat);
   }
 
   toggleNightMode(on: boolean) {
     this.renderer.setNightMode(on);
+    $isNightMode.set(on);
     audio.playBeep(on ? 220 : 440, 0.1);
   }
 
@@ -91,8 +78,6 @@ export class SimulationController {
     this.lastTime = time;
     this.tickCount++;
 
-    if (this.tickCount % 2000 === 0 && Math.random() > 0.5) this.spawnCat();
-
     const currentScore = this.forcedScore !== null ? this.forcedScore : (this.snapshot ? this.snapshot.metrics.performanceScore : 0);
     const isFever = currentScore >= 90;
     this.renderer.setFeverMode(isFever);
@@ -102,6 +87,8 @@ export class SimulationController {
     tickAgents(this.agents, dt);
 
     const history = this.getHistoryScores();
+    $history.set(history);
+    $agents.set([...this.agents]);
 
     if (this.audioStarted) {
       if (this.scanning) audio.setAmbienceIntensity(0.5);
@@ -122,52 +109,36 @@ export class SimulationController {
       this.renderer.renderIdle(this.agents, this.tickCount, this.scanning, history);
     }
 
-    if (this.tickCount % 30 === 0) {
-      this.onAgentsUpdate?.([...this.agents]);
-    }
-
     this.animFrameId = requestAnimationFrame(this.loop);
   };
 
   private getHistoryScores(): number[] { return getHistory().map(h => h.snapshot.metrics.performanceScore); }
 
   async runScan(url: string): Promise<SystemSnapshot> {
-    const lowUrl = url.toLowerCase();
-    if (lowUrl === 'doom') { this.triggerDoom(); return this.snapshot!; }
-    if (lowUrl === 'cat') { this.spawnCat(); this.forceScore(100); return this.snapshot!; }
-
     if (this.scanning) throw new Error('Scan already in progress');
-    this.forcedScore = null; this.isDoomMode = false;
+    this.forcedScore = null;
     if (!this.audioStarted) { audio.startAmbience(); this.audioStarted = true; }
-    this.scanning = true; this.scanStartTime = performance.now();
-    this.onScanStart?.();
+    this.scanning = true; 
+    $isScanning.set(true);
+    this.scanStartTime = performance.now();
     
     try {
       const metrics = await fetchMetrics(url);
       this.snapshot = interpret(metrics);
       processSnapshot(this.snapshot);
       this.scanning = false;
-      this.onSnapshotUpdate?.(this.snapshot);
-      this.onEventsUpdate?.(getEventLog());
+      $isScanning.set(false);
+      $systemSnapshot.set(this.snapshot);
+      $performanceScore.set(this.snapshot.metrics.performanceScore);
       return this.snapshot;
     } catch (error) {
       this.scanning = false;
-      // Triger Chaos/Fire if URL is down
+      $isScanning.set(false);
       this.forceScore(Math.random() * 20 + 10);
-      this.agents.forEach(a => {
-        if (Math.random() > 0.5) {
-          a.dialogue = "WEBSITE IS DOWN!";
-          a.dialogueTimer = 5;
-        }
-      });
       throw error;
-    } finally {
-      this.onScanEnd?.();
     }
   }
 
-  isScanning() { return this.scanning; }
   getSnapshot() { return this.snapshot; }
-  getAgents() { return [...this.agents]; }
   destroy() { this.running = false; if (this.animFrameId) cancelAnimationFrame(this.animFrameId); }
 }
