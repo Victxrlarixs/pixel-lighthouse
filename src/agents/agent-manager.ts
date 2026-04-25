@@ -12,8 +12,9 @@ const FIELD_BEHAVIORS: Record<string, string[]> = {
   INITIAL: ["Patching Node 4.", "Rack humidity: 35%.", "Cabling check OK."],
   SCAN_PHASE: ["Throughput spiking.", "I/O Wait rising...", "Fan speed: 100%."],
   STABLE: ["Infrastructure stable.", "Cooling optimized.", "SSD health: 100%."],
-  ALERT: ["#%&$ Node failure!", "Check fiber switch!", "Memory leak!"],
-  RUNNING: ["*** CRITICAL OVERHEAT ***", "EVACUATE RACK 2!"],
+  WARNING: ["High load on Node 2.", "Check latency!", "Scaling up workers..."],
+  CHAOS: ["#%&$ Node failure!", "Check fiber switch!", "Memory leak!"],
+  FIRE: ["*** CRITICAL OVERHEAT ***", "EVACUATE RACK 2!"],
 };
 
 export const LOCATIONS = {
@@ -142,10 +143,16 @@ export function updateAgents(agents: Agent[], snapshot: SystemSnapshot | null, i
         break;
 
       case AgentState.WORKING:
-        meta.mood = "working";
         if (isAtTarget) {
-          meta.taskTimer -= 0.016; 
+          meta.taskTimer -= 0.016;
+          if (snapshot?.state === SystemState.WARNING) {
+            meta.mood = "working";
+          } else {
+            meta.mood = "happy";
+          }
           if (meta.taskTimer <= 0) agent.state = AgentState.IDLE;
+        } else {
+          meta.mood = snapshot?.state === SystemState.WARNING ? "working" : "happy";
         }
         break;
 
@@ -173,7 +180,7 @@ export function updateAgents(agents: Agent[], snapshot: SystemSnapshot | null, i
 /**
  * Handles frame-by-frame movement and physics.
  */
-export function tickAgents(agents: Agent[], dt: number, isChaos: boolean = false): void {
+export function tickAgents(agents: Agent[], dt: number, state: SystemState | null = null): void {
   for (const agent of agents) {
     if (agent.dialogueTimer > 0) {
       agent.dialogueTimer -= dt;
@@ -186,7 +193,11 @@ export function tickAgents(agents: Agent[], dt: number, isChaos: boolean = false
 
     if (dist > 0.05) {
       agent.isSitting = false;
-      const speed = isChaos ? 3.5 : 1.6;
+      
+      let speed = 1.6; // STABLE
+      if (state === SystemState.WARNING) speed = 2.4;
+      else if (state === SystemState.CHAOS || state === SystemState.FIRE) speed = 3.5;
+      
       const step = speed * dt;
       
       let nextX = agent.x;

@@ -89,6 +89,31 @@ export class SimulationController {
     audio.playBeep(on ? 220 : 440, 0.1);
   }
 
+  /**
+   * Calculates canvas pixel coordinates and returns tooltip if hitting a target.
+   */
+  getTooltipAt(clientX: number, clientY: number, rect: DOMRect): string | null {
+    if (!this.renderer) return null;
+    const canvas = this.renderer.canvasElement;
+    
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const scale = Math.max(scaleX, scaleY);
+    
+    const imgWidth = canvas.width / scale;
+    const imgHeight = canvas.height / scale;
+    const offsetX = (rect.width - imgWidth) / 2;
+    const offsetY = (rect.height - imgHeight) / 2;
+    
+    const rx = clientX - rect.left - offsetX;
+    const ry = clientY - rect.top - offsetY;
+    
+    const cx = rx * scale;
+    const cy = ry * scale;
+    
+    return this.renderer.getHitTarget(cx, cy, this.agents);
+  }
+
   private loop = (time: number) => {
     if (!this.running) return;
 
@@ -102,7 +127,7 @@ export class SimulationController {
         ? this.forcedScore
         : this.snapshot?.metrics.performanceScore ?? 0;
 
-    this.renderer.setFeverMode(currentScore >= 90);
+    this.renderer.setFeverMode(currentScore >= 98);
 
     const scanElapsed = this.scanning
       ? (performance.now() - this.scanStartTime) / 1000
@@ -114,12 +139,8 @@ export class SimulationController {
       $scanStep.set(LIGHTHOUSE_STEPS[stepIndex]);
       $scanProgress.set(progress);
     }
-    const isChaos =
-      this.snapshot?.state === SystemState.CHAOS ||
-      this.snapshot?.state === SystemState.FIRE;
-
     updateAgents(this.agents, this.snapshot, this.scanning, scanElapsed);
-    tickAgents(this.agents, dt, isChaos);
+    tickAgents(this.agents, dt, this.snapshot?.state ?? null);
 
     const history = getHistory().map((h) => h.snapshot.metrics.performanceScore);
     $history.set(history);
@@ -131,7 +152,11 @@ export class SimulationController {
       } else if (this.snapshot?.state === SystemState.FIRE) {
         audio.setAmbienceIntensity(1.0);
         if (this.tickCount % 120 === 0) audio.playAlarm();
-      } else if (currentScore >= 90) {
+      } else if (this.snapshot?.state === SystemState.CHAOS) {
+        audio.setAmbienceIntensity(0.8);
+      } else if (this.snapshot?.state === SystemState.WARNING) {
+        audio.setAmbienceIntensity(0.6);
+      } else if (currentScore >= 98) {
         audio.setAmbienceIntensity(0.2);
         if (this.tickCount % 60 === 0)
           audio.playBeep(880 + Math.random() * 400, 0.05);
@@ -195,21 +220,24 @@ export class SimulationController {
     } catch (error: any) {
       this.scanning = false;
       $isScanning.set(false);
+      
+      // Ensure HUD remains hidden by explicitly setting snapshot to null
+      this.snapshot = null;
+      $systemSnapshot.set(null);
+      
       if (error.message === "INVALID_URL") {
-        this.forceScore(0);
         this.agents.forEach((a) => {
           a.dialogue = "INVALID URL TARGET!";
           a.dialogueTimer = 4;
         });
-        $scanStep.set("ERROR: INVALID URL");
+        $scanStep.set("INVALID URL, TRY AGAIN");
       } else {
-        this.forceScore(Math.random() * 20 + 10);
         $scanStep.set("ERROR: AUDIT FAILED");
       }
       setTimeout(() => {
         $scanProgress.set(0);
         $scanStep.set("");
-      }, 2000);
+      }, 3000);
       throw error;
     }
   }

@@ -15,8 +15,9 @@ export function interpret(metrics: PerformanceMetrics): SystemSnapshot {
   let state = SystemState.STABLE;
   const score = metrics.performanceScore;
 
-  if (score < 50) state = SystemState.FIRE;
-  else if (score < 90) state = SystemState.CHAOS;
+  if (score < 20) state = SystemState.FIRE;
+  else if (score < 50) state = SystemState.CHAOS;
+  else if (score < 90) state = SystemState.WARNING;
 
   const snapshot: SystemSnapshot = {
     metrics,

@@ -54,6 +54,7 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
+  cursor: crosshair;
 }
 
 .simulation-view {
@@ -219,6 +220,27 @@ canvas {
 .metrics-hud.hidden {
   opacity: 0;
   transform: translateY(-20px);
+}
+
+.canvas-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  padding: 6px 10px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  z-index: 1000;
+  transition: opacity 0.1s;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+  transform: translate(15px, 15px);
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
+
+.canvas-tooltip.hidden {
+  opacity: 0;
 }
 
 .hud-row {

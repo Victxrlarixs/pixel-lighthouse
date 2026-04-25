@@ -107,6 +107,29 @@ $scanStep.subscribe((step) => {
   }
 });
 
+const tooltip = document.getElementById("canvas-tooltip") as HTMLDivElement;
+
+canvas.addEventListener("mousemove", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const text = controller.getTooltipAt(e.clientX, e.clientY, rect);
+  
+  if (text) {
+    tooltip.textContent = text;
+    tooltip.classList.remove("hidden");
+    tooltip.style.left = `${e.clientX - rect.left}px`;
+    tooltip.style.top = `${e.clientY - rect.top}px`;
+    canvas.style.cursor = "pointer";
+  } else {
+    tooltip.classList.add("hidden");
+    canvas.style.cursor = "crosshair";
+  }
+});
+
+canvas.addEventListener("mouseleave", () => {
+  tooltip.classList.add("hidden");
+  canvas.style.cursor = "crosshair";
+});
+
 function updateHudBar(id: string, value: number, max: number) {
   const bar = document.getElementById(`bar-${id}`);
   const valText = document.getElementById(`val-${id}`);

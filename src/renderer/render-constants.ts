@@ -13,8 +13,17 @@ export const STATE_COLORS = {
     wallDark: "#455a64",
     wallLight: "#cfd8dc",
   },
-  [SystemState.CHAOS]: {
+  [SystemState.WARNING]: {
     accent: "#e0af68",
+    bg: "#1a1b26",
+    floor1: "#cfd8dc",
+    floor2: "#eceff1",
+    wallMain: "#90a4ae",
+    wallDark: "#455a64",
+    wallLight: "#cfd8dc",
+  },
+  [SystemState.CHAOS]: {
+    accent: "#ff9e64",
     bg: "#1a1b26",
     floor1: "#cfd8dc",
     floor2: "#eceff1",

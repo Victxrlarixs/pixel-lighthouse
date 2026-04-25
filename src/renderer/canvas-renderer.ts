@@ -69,6 +69,49 @@ export class CanvasRenderer {
   }
 
   /**
+   * Returns tooltip text for a given pixel coordinate on the scaled canvas.
+   */
+  getHitTarget(cx: number, cy: number, agents: Agent[]): string | null {
+    const x = cx / this.scale;
+    const y = cy / this.scale;
+    
+    const col = Math.floor(x / TILE_SIZE);
+    const row = Math.floor(y / TILE_SIZE);
+    
+    if (col < 0 || col >= MAP_COLS || row < 0 || row >= MAP_ROWS) return null;
+    
+    for (const agent of agents) {
+      const ax = agent.x * TILE_SIZE;
+      const ay = agent.y * TILE_SIZE;
+      if (x >= ax && x < ax + TILE_SIZE && y >= ay - TILE_SIZE/2 && y < ay + TILE_SIZE) {
+        const mood = agent.mood > 0.8 ? 'OPTIMAL' : agent.mood > 0.4 ? 'STRESSED' : 'PANIC';
+        return `[AGENT]\nROLE: ${agent.role}\nSTATE: ${agent.state}\nMOOD: ${mood}`;
+      }
+    }
+    
+    const tile = DATA_CENTER_MAP[row][col];
+    switch (tile) {
+      case TileType.SERVER:
+      case TileType.SERVER_LARGE:
+        return `[SERVER RACK]\nSTATUS: ONLINE\nLOAD: ${(Math.random() * 40 + 20).toFixed(1)}%`;
+      case TileType.RACK:
+        return `[STORAGE RACK]\nCAPACITY: ${(Math.random() * 20 + 70).toFixed(1)}%\nI/O: ${(Math.random() * 100).toFixed(0)} IOPS`;
+      case TileType.MONITOR:
+      case TileType.LAPTOP:
+      case TileType.DESK:
+        return `[WORKSTATION]\nSTATE: IDLE`;
+      case TileType.COFFEE_MACHINE:
+        return `[COFFEE_MACHINE]\nBEANS: OK\nWATER: OK`;
+      default:
+        return null;
+    }
+  }
+
+  get canvasElement() {
+    return this.canvas;
+  }
+
+  /**
    * Pre-renders the static map into a buffer.
    * @param state - The system state for floor/wall colors.
    */

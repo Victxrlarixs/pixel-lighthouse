@@ -27,6 +27,7 @@ export enum TileType {
 
 export enum SystemState {
   STABLE = "STABLE",
+  WARNING = "WARNING",
   CHAOS = "CHAOS",
   FIRE = "FIRE",
 }
