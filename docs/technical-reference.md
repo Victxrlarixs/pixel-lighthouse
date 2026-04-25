@@ -1,8 +1,8 @@
-# Technical Reference — Pixel Insights
+# Technical Reference — Pixel Lighthouse
 
 ## Overview
 
-Pixel Insights is a server-side rendered Astro application that performs real Lighthouse audits and translates their results into a reactive pixel-art simulation. The architecture separates three distinct concerns: **metric acquisition** (server-side, via Lighthouse and Chrome), **state interpretation** (a finite state machine that converts raw scores into simulation states), and **visual output** (a Canvas API rendering engine with agent-based simulation).
+Pixel Lighthouse is a server-side rendered Astro application that performs real Lighthouse audits and translates their results into a reactive pixel-art simulation. The architecture separates three distinct concerns: **metric acquisition** (server-side, via Lighthouse and Chrome), **state interpretation** (a finite state machine that converts raw scores into simulation states), and **visual output** (a Canvas API rendering engine with agent-based simulation).
 
 The project has no UI framework, no component library, and no runtime DOM abstraction. All interactivity is written in vanilla TypeScript. State is managed through NanoStores atoms that connect the audit pipeline to the renderer without coupling them directly.
 

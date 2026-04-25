@@ -1,39 +1,70 @@
-# Lighthouse Pixel — Performance Telemetry Simulator
+# Pixel Lighthouse
 
 [![Astro](https://img.shields.io/badge/Astro-BC52EE?style=for-the-badge&logo=astro&logoColor=white)](https://astro.build/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![NanoStores](https://img.shields.io/badge/NanoStores-000000?style=for-the-badge&logo=nanostores&logoColor=white)](https://github.com/nanostores/nanostores)
+[![Lighthouse](https://img.shields.io/badge/Lighthouse-F44B21?style=for-the-badge&logo=lighthouse&logoColor=white)](https://developer.chrome.com/docs/lighthouse/)
 
-**"A living data center that explains web performance through metaphors."**
-
-Lighthouse Pixel is an interactive visualization tool where a pixel-art data center represents a website's performance. Instead of just numbers, you see a living system that reacts visually to Lighthouse metrics like LCP, CLS, and TBT.
-
----
-
-## Intelligent Visual Metaphors
-
-This tool transforms abstract metrics into intuitive visual feedback:
-
-- **LCP (Largest Contentful Paint):** Represented by "Heavy Data Payloads". If LCP is slow, massive crates block movement and vibrate with effort.
-- **CLS (Cumulative Layout Shift):** Causes "Layout Jitter". The entire scene (racks, furniture) shifts and vibrates based on the severity of the shift.
-- **TBT (Total Blocking Time):** Simulates "Main-Thread Blocking". Characters stutter and freeze in place, visually representing lag.
+Enter a URL. A real Lighthouse audit runs server-side. The results appear not as numbers — but as a pixel-art data center where the environment, the lights, and the people react to your site's performance.
 
 ---
 
-## Key Features
+## How it works
 
-- **Interactive Telemetry HUD:** A reactive metrics panel that controls the scene.
-- **Bidirectional Inspection:** Hover or click any metric to highlight its physical representation in the data center.
-- **Premium Aesthetics:** GBA-style pixel art with modern CRT scanlines, glassmorphism UI, and smooth spring animations.
-- **Scenario Simulator:** Manually force performance scores to see how the data center adapts from "Stable" to "Chaos" or "Fire" modes.
-- **Zero-Inline Architecture:** Clean separation of concerns with logic decoupled into reactive NanoStores and modular TypeScript modules.
+You submit a URL. The server launches Chrome headlessly, runs a full Lighthouse audit, and returns six metrics: performance score, FCP, LCP, CLS, TBT, and timestamp. Those metrics are passed through a state machine that classifies the system into one of four states. The canvas reacts immediately.
+
+Seven agents live in the data center. They have roles, moods, walking speeds, and dialogue. When your site performs well, they work calmly at their desks. When it does not, they run.
+
+### System states
+
+| Score | State | What happens |
+|-------|-------|-------------|
+| 90 – 100 | Stable | Agents work at normal pace, blue accent lighting |
+| 50 – 89 | Warning | Agents move faster, yellow lighting, stress dialogue |
+| 20 – 49 | Chaos | Agents sprint between racks, fire appears on servers |
+| 0 – 19 | Fire | Canvas shakes, alarm sounds, smoke and flames everywhere |
+
+### Metric metaphors
+
+Each metric has a physical representation in the scene that activates when you hover or click it in the HUD:
+
+| Metric | Visual representation |
+|--------|----------------------|
+| LCP | A heavy crate that vibrates — the worse the score, the more it shakes |
+| FCP | A highlighted server rack in the upper zone |
+| CLS | The entire scene jitters with sinusoidal translation |
+| TBT | Agents stutter and flicker with a red overlay proportional to blocking time |
 
 ---
 
-## Tech Stack
+## Quickstart
 
-- **Framework:** Astro (Static Site Generation)
-- **Logic:** TypeScript (Simulation engine)
-- **State Management:** NanoStores (Atomic reactivity)
-- **Rendering:** Canvas API (Pixel-art engine)
-- **Styling:** Vanilla CSS (Advanced animations)
+Requires Node.js >= 22.12.0 and Google Chrome installed locally.
+
+```bash
+npm install
+npm run dev
+```
+
+Open `http://localhost:4321`, enter any URL, and press Enter.
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Astro 6 — SSR with Node.js standalone adapter |
+| Language | TypeScript 5 strict |
+| State | NanoStores — atomic reactive atoms |
+| Rendering | Canvas API — pixel-art engine, no libraries |
+| Audio | Web Audio API — procedural sound |
+| Audit | Lighthouse 13 + chrome-launcher |
+| Styling | Vanilla CSS |
+
+---
+
+## Documentation
+
+- [User Guide](docs/user-guide.md) — interface walkthrough, metric HUD, simulator, night mode
+- [Technical Reference](docs/technical-reference.md) — architecture, data flow, rendering pipeline, agent system, extension points

@@ -1,6 +1,6 @@
-# User Guide — Pixel Insights
+# User Guide — Pixel Lighthouse
 
-Pixel Insights is a web performance visualization tool. You provide a URL, it runs a real Lighthouse audit in the background, and renders the results as an animated pixel-art data center where the environment and characters physically react to how well your target site performs.
+Pixel Lighthouse is a web performance visualization tool. You provide a URL, it runs a real Lighthouse audit in the background, and renders the results as an animated pixel-art data center where the environment and characters physically react to how well your target site performs.
 
 ---
 
